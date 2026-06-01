@@ -9,6 +9,7 @@
 //  - All Maggie copy lives in this file so the voice stays consistent
 
 import type { GameState } from '../types';
+import { bAdd, bGte } from '../util/bignum';
 
 export interface LetterContents {
   coin: number;
@@ -81,6 +82,20 @@ const INTROS_NORMAL = [
   "I'm in the middle of a CRISIS but I made time for this. You're welcome.",
 ];
 
+// Cryptic intros — used occasionally in the rotation (see rollLetter).
+// Bible rule: funny if naive, ominous if you know. Surface read must
+// remain warm and Maggie-flavored. These are NOT supposed to feel weird
+// on first read. They feel weird only AFTER the player knows.
+const INTROS_CRYPTIC = [
+  "I checked in on you yesterday. You didn't see me. That's FINE. — M.",
+  "You looked TIRED the other day. Don't argue. I PAY ATTENTION.",
+  "You've been doing well. SO well. I almost said something but I DIDN'T because I'm POLITE.",
+  "I had to remind myself what day it was. Don't ASK how I usually know.",
+  "Someone asked about you. I told them nothing. Don't worry about it. Or DO. Whatever.",
+  "I saw you sharpen that thing again. You looked so SERIOUS. It was CUTE in a sad way.",
+  "Sometimes I think about how new you are here. It's NICE. Anyway.",
+];
+
 const OUTROS_NORMAL = [
   "Don't spend it all on something STUPID. Or do. Whatever. I don't CARE.",
   "Anyway. Try not to die. Or do. — Maggie",
@@ -90,6 +105,15 @@ const OUTROS_NORMAL = [
   "This was NOT a big deal. Stop making it a big deal. — M.",
   "Bye. Don't write back. Actually do. But not too much. — Maggie",
   "Stay out of trouble. Or get into a SMALL amount, for the stories. — M.",
+];
+
+// Cryptic outros — see INTROS_CRYPTIC. Surface-read warm, retrospect-read off.
+const OUTROS_CRYPTIC = [
+  "I'll be HERE. Where ELSE would I be. — Maggie",
+  "I'll see you SOON. Sooner than you think. (That's not a THREAT, you DISASTER.) — M.",
+  "Take care of yourself. Someone has to. — Maggie",
+  "Don't forget about me out there. I would NEVER forget about YOU. — M.",
+  "You don't have to thank me. I'm just doing my JOB. — Maggie",
 ];
 
 // Streak milestone messages (replaces outro when triggered)
@@ -137,7 +161,7 @@ export function getReactiveLine(state: GameState): string | null {
     state.questFlags.maggie_noticed_sword = true;
     reactions.push(`I heard you carved a SWORD, dorkus. Congratulations on the toothpick.`);
   }
-  if (state.coin >= 10000 && !state.questFlags.maggie_noticed_rich) {
+  if (bGte(state.coin, 10000) && !state.questFlags.maggie_noticed_rich) {
     state.questFlags.maggie_noticed_rich = true;
     reactions.push(`Word on the street is you have TEN THOUSAND COIN. Hello? Are we sharing? I'm SHORT this month.`);
   }
@@ -166,19 +190,68 @@ export function getReactiveLine(state: GameState): string | null {
   return reactions[Math.floor(Math.random() * reactions.length)];
 }
 
-// ---------- Letter availability ----------
+// ---------- Letter availability (queued, v0.79) ----------
+//
+// Letters accumulate every LETTER_INTERVAL_MS (20h) into a queue capped
+// at 3. Once the queue is full, additional accruals are lost — the player
+// must claim some letters to free space. shouldOfferLetter returns true
+// while the queue has at least 1 letter.
+//
+// updateLetterQueue must be called on load and on tick to advance the
+// queue based on elapsed real-world time.
 
-export function shouldOfferLetter(state: GameState): boolean {
-  const lastClaim = state.dailyLetterLastClaim ?? 0;
-  if (lastClaim === 0) return true;  // never claimed before
-  return Date.now() - lastClaim >= LETTER_INTERVAL_MS;
+export const LETTER_QUEUE_CAP = 3;
+
+export function updateLetterQueue(state: GameState): void {
+  const now = Date.now();
+  // Initialize on first-ever load if needed
+  if (state.lettersQueued === undefined) {
+    // Migration: if there's a prior claim and enough time has passed for one
+    // letter, queue 1 immediately. Otherwise start with 0.
+    const lastClaim = state.dailyLetterLastClaim ?? 0;
+    if (lastClaim === 0) {
+      state.lettersQueued = 1;
+      state.nextLetterReadyAt = now + LETTER_INTERVAL_MS;
+      return;
+    }
+    // Catch-up: count completed intervals since lastClaim
+    const elapsed = now - lastClaim;
+    if (elapsed >= LETTER_INTERVAL_MS) {
+      const earned = Math.floor(elapsed / LETTER_INTERVAL_MS);
+      state.lettersQueued = Math.min(LETTER_QUEUE_CAP, earned);
+      state.nextLetterReadyAt = lastClaim + (earned + 1) * LETTER_INTERVAL_MS;
+    } else {
+      state.lettersQueued = 0;
+      state.nextLetterReadyAt = lastClaim + LETTER_INTERVAL_MS;
+    }
+    return;
+  }
+  // Normal tick: advance the queue for every full interval that's elapsed
+  let nextReady = state.nextLetterReadyAt ?? (now + LETTER_INTERVAL_MS);
+  while (now >= nextReady && (state.lettersQueued ?? 0) < LETTER_QUEUE_CAP) {
+    state.lettersQueued = (state.lettersQueued ?? 0) + 1;
+    nextReady += LETTER_INTERVAL_MS;
+  }
+  // If queue is full, skip past missed intervals so the next slot starts
+  // ticking immediately after the player claims one.
+  while (now >= nextReady && (state.lettersQueued ?? 0) >= LETTER_QUEUE_CAP) {
+    nextReady += LETTER_INTERVAL_MS;
+  }
+  state.nextLetterReadyAt = nextReady;
 }
 
-// How much time until next letter is available (for UI display)
+export function shouldOfferLetter(state: GameState): boolean {
+  return (state.lettersQueued ?? 0) > 0;
+}
+
+// How much time until next letter is available (for UI display). When the
+// queue isn't full, this is the time to the next increment. When the queue
+// IS full, it's effectively negative — letters are being lost — but we
+// return 0 so the UI shows "ready" rather than a confusing negative timer.
 export function timeUntilNextLetterMs(state: GameState): number {
-  const lastClaim = state.dailyLetterLastClaim ?? 0;
-  if (lastClaim === 0) return 0;
-  return Math.max(0, lastClaim + LETTER_INTERVAL_MS - Date.now());
+  if ((state.lettersQueued ?? 0) >= LETTER_QUEUE_CAP) return 0;
+  const nextReady = state.nextLetterReadyAt ?? 0;
+  return Math.max(0, nextReady - Date.now());
 }
 
 // ---------- Letter generation ----------
@@ -208,9 +281,18 @@ export function rollLetter(state: GameState): LetterContents {
     newStreak = (state.dailyLetterStreak ?? 0) + 1;
   }
 
-  // Coin scales with total skill levels — keeps gift relevant late-game
-  const base = 25 + totalSkillLevels(state) * 3;
-  const coin = base + Math.floor(Math.random() * 15);
+  // Coin scales with total skill levels AND current streak. The goal: a letter
+  // should always feel like a real payday, not a tip.
+  //
+  // Examples on the new curve (assuming 360c/min baseline income from combat):
+  //   Day 1, total levels 10:   500 base + 100 streak = ~600c   (~2 min income)
+  //   Day 7, total levels 30:   800 base + 1400 streak = ~2200c (~6 min)
+  //   Day 14, total levels 60:  1100 base + 4200 streak = ~5300c (~15 min)
+  //   Day 30, total levels 150: 2000 base + 12000 streak = ~14k (~40 min)
+  const skillsBase = 500 + totalSkillLevels(state) * 10;
+  const streakBonus = newStreak * newStreak * 30;  // quadratic — rewards persistence
+  const variance = Math.floor(Math.random() * 100);
+  const coin = skillsBase + streakBonus + variance;
 
   // Daily Bread: 1 base, +1 bonus on milestone days
   let dailyBread = 1;
@@ -227,10 +309,16 @@ export function rollLetter(state: GameState): LetterContents {
   const doodleId = (newStreak >= 2 && newStreak % 2 === 0) ? nextDoodleId(state) : null;
 
   // Build copy
-  let intro = streakBroke ? pick(STREAK_BROKEN_LINES) : pick(INTROS_NORMAL);
+  // ~15% of normal intros are replaced by a "cryptic" line (see INTROS_CRYPTIC).
+  // Not used on first letter (player has no context yet) or on streak-break
+  // (which has its own dramatic line). Streak milestones keep their fixed copy.
+  const isFirstLetter = lastClaim === 0;
+  const useCrypticIntro = !streakBroke && !isFirstLetter && Math.random() < 0.15;
+  let intro = streakBroke
+    ? pick(STREAK_BROKEN_LINES)
+    : (useCrypticIntro ? pick(INTROS_CRYPTIC) : pick(INTROS_NORMAL));
 
   // Body has fixed structure: list the rewards in Maggie's voice
-  const isFirstLetter = lastClaim === 0;
   const bodyParts: string[] = [];
   bodyParts.push(`Here, take ${coin} coin. I had EXTRA. Don't ASK why.`);
   if (isFirstLetter) {
@@ -254,7 +342,10 @@ export function rollLetter(state: GameState): LetterContents {
 
   const body = bodyParts.join(' ');
 
-  const outro = streakMessage ?? pick(OUTROS_NORMAL);
+  // Outros: same ~15% cryptic rotation, unless this is a streak milestone
+  // (which has its own fixed message).
+  const useCrypticOutro = !streakMessage && Math.random() < 0.15;
+  const outro = streakMessage ?? (useCrypticOutro ? pick(OUTROS_CRYPTIC) : pick(OUTROS_NORMAL));
 
   return {
     coin,
@@ -271,18 +362,28 @@ export function rollLetter(state: GameState): LetterContents {
 // Apply the letter's effects to the state. Called after the player clicks
 // "Take it" on the letter modal.
 export function claimLetter(state: GameState, contents: LetterContents): void {
-  state.coin += contents.coin;
+  state.coin = bAdd(state.coin, contents.coin);
   state.dailyBread = (state.dailyBread ?? 0) + contents.dailyBread;
   if (contents.doodleId) {
     state.doodlesOwned = state.doodlesOwned ?? {};
     state.doodlesOwned[contents.doodleId] = true;
   }
   if (contents.perkPoint) {
-    // Award to combat by default - we can let the player choose later
     state.skills.combat.perkPoints += 1;
   }
   state.dailyLetterLastClaim = Date.now();
   state.dailyLetterStreak = contents.streakAfter;
+  // Pop one from the queue
+  state.lettersQueued = Math.max(0, (state.lettersQueued ?? 1) - 1);
+  // If the queue is now non-full and the next-ready timestamp is in the
+  // past (because the queue was full and we skipped intervals), restart
+  // the timer fresh from now so the player waits a full 20h for the next.
+  const now = Date.now();
+  if ((state.lettersQueued ?? 0) < LETTER_QUEUE_CAP) {
+    if ((state.nextLetterReadyAt ?? 0) < now) {
+      state.nextLetterReadyAt = now + LETTER_INTERVAL_MS;
+    }
+  }
 }
 
 // ---------- Innkeep's Counter ----------
@@ -308,19 +409,19 @@ export const COUNTER_BUFFS: CounterBuff[] = [
   },
   {
     id: 'forester_eye',
-    name: "Forester's Eye",
-    flavor: '"Squint at the trees properly."',
-    cost: 3, cap: 20,
-    description: '+1% woodcutting speed, permanently.',
-    apply: (s) => { s.permBonuses = s.permBonuses ?? {}; s.permBonuses.wcSpeed = (s.permBonuses.wcSpeed ?? 0) + 0.01; },
+    name: 'Practiced Hands',
+    flavor: '"Same hands, different work. They learn."',
+    cost: 3, cap: 25,
+    description: '+1% gathering speed (all skills), permanently.',
+    apply: (s) => { s.permBonuses = s.permBonuses ?? {}; s.permBonuses.gatherSpeed = (s.permBonuses.gatherSpeed ?? 0) + 0.01; },
   },
   {
     id: 'whittler_calluses',
-    name: "Whittler's Calluses",
-    flavor: '"Tough hands. Tougher opinions about wood grain."',
-    cost: 3, cap: 20,
-    description: '+1% carving speed, permanently.',
-    apply: (s) => { s.permBonuses = s.permBonuses ?? {}; s.permBonuses.cvSpeed = (s.permBonuses.cvSpeed ?? 0) + 0.01; },
+    name: 'Steady Grip',
+    flavor: '"Don\'t shake. The work doesn\'t like it when you shake."',
+    cost: 3, cap: 25,
+    description: '+1% crafting speed (all skills), permanently.',
+    apply: (s) => { s.permBonuses = s.permBonuses ?? {}; s.permBonuses.craftSpeed = (s.permBonuses.craftSpeed ?? 0) + 0.01; },
   },
   {
     id: 'quick_hands',

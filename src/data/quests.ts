@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { bGte } from '../util/bignum';
 
 export interface QuestStepData {
   id: string;
@@ -67,7 +68,7 @@ export const QUEST_STEPS: QuestStepData[] = [
     id: 'q4',
     npc: 'Maggie the Innkeep',
     text: `"OKAY listen. THERE'S A TROLL on the bridge demanding coin and he's RUINING my DELIVERIES. Either give him 1000 coin or — and I would PREFER this option — END HIM. I don't CARE which. Just FIX IT. Lump."`,
-    visible: (s) => s.skills.combat.level >= 25 || s.coin >= 1000,
+    visible: (s) => s.skills.combat.level >= 25 || bGte(s.coin, 1000),
     check: (s) => !!s.questFlags.trollSlain || !!s.questFlags.trollPaid,
     claim: (_s, h) => {
       h.addCoin(8000);

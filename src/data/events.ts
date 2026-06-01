@@ -8,6 +8,7 @@
 // choices. UI rendering is handled generically by the EventModal component.
 
 import type { GameState } from '../types';
+import { bGte } from '../util/bignum';
 
 export interface EventChoice {
   label: string;
@@ -36,6 +37,20 @@ export interface RandomEventDef {
   choices: EventChoice[];
 }
 
+// Floor-scaled coin multiplier. Splinterwood is the 1x baseline; later floors
+// scale up so events feel proportional to the player's current income tier.
+// Tuning: floor 2 = 4x, floor 3 = 16x, floor 4 = 50x, floor 5 = 150x.
+function floorCoinMult(state: GameState): number {
+  switch (state.currentFloor) {
+    case 'greystone_reach': return 4;
+    case 'floor_3':         return 16;
+    case 'floor_4':         return 50;
+    case 'floor_5':         return 150;
+    case 'splinterwood':
+    default:                return 1;
+  }
+}
+
 // ---------- Event definitions ----------
 
 export const RANDOM_EVENTS: RandomEventDef[] = [
@@ -48,8 +63,10 @@ export const RANDOM_EVENTS: RandomEventDef[] = [
     choices: [
       {
         label: 'Pocket it',
-        resolve: (_s, h) => {
-          const amt = 5 + Math.floor(Math.random() * 20);
+        resolve: (s, h) => {
+          // Floor 1: 150-450c. Scales with floor.
+          const base = 150 + Math.floor(Math.random() * 300);
+          const amt = Math.floor(base * floorCoinMult(s));
           h.addCoin(amt);
           return `+${amt} coin.`;
         },
@@ -66,28 +83,29 @@ export const RANDOM_EVENTS: RandomEventDef[] = [
     weight: 20,
     title: 'A wandering trader',
     flavor: 'A figure in a dusty cloak unfolds a small stall. "Just passing through. Special prices, only for you."',
-    gate: (s) => s.coin >= 30,
+    gate: (s) => bGte(s.coin, 100),
     choices: [
       {
-        label: 'Buy a tonic — 30 coin',
-        description: 'Heals 10 HP. Usual price 25, but his face is friendly.',
-        enabled: (s) => s.coin >= 30,
+        label: 'Buy a tonic — 40 coin',
+        description: 'Heals 10 HP. Discounted from his usual 60.',
+        enabled: (s) => bGte(s.coin, 40),
         resolve: (_s, h) => {
-          if (!h.removeCoin(30)) return 'Out of coin.';
+          if (!h.removeCoin(40)) return 'Out of coin.';
           h.addItem('potion_minor', 1);
           return 'A tonic, slightly cloudy. Likely fine.';
         },
       },
       {
-        label: 'Buy mystery pouch — 50 coin',
+        label: 'Buy mystery pouch — 200 coin',
         description: 'Could be wonderful. Could be regret.',
-        enabled: (s) => s.coin >= 50,
-        resolve: (_s, h) => {
-          if (!h.removeCoin(50)) return 'Out of coin.';
+        enabled: (s) => bGte(s.coin, 200),
+        resolve: (s, h) => {
+          if (!h.removeCoin(200)) return 'Out of coin.';
           const roll = Math.random();
           if (roll < 0.25) {
-            h.addCoin(150);
-            return 'Coin spills out. He vanishes before you can argue.';
+            const reward = Math.floor(800 * floorCoinMult(s));
+            h.addCoin(reward);
+            return `Coin spills out — ${reward}. He vanishes before you can argue.`;
           } else if (roll < 0.55) {
             h.addItem('potion_greater', 1);
             return 'A greater tonic, smelling faintly of cinnamon.';
@@ -110,30 +128,32 @@ export const RANDOM_EVENTS: RandomEventDef[] = [
     weight: 12,
     title: 'A mysterious stranger',
     flavor: 'A hooded figure offers a coin. "Heads or tails. Double or nothing. Your choice of side."',
-    gate: (s) => s.coin >= 50,
+    gate: (s) => bGte(s.coin, 200),
     choices: [
       {
-        label: 'Heads — wager 50',
-        enabled: (s) => s.coin >= 50,
-        resolve: (_s, h) => {
-          if (!h.removeCoin(50)) return 'Out of coin.';
+        label: 'Heads — wager 200',
+        enabled: (s) => bGte(s.coin, 200),
+        resolve: (s, h) => {
+          if (!h.removeCoin(200)) return 'Out of coin.';
           if (Math.random() < 0.5) {
-            h.addCoin(100);
-            return 'Heads. The stranger nods grimly and is gone. +50 net.';
+            const reward = Math.floor(400 * floorCoinMult(s));
+            h.addCoin(reward);
+            return `Heads. The stranger nods grimly and is gone. +${reward - 200} net.`;
           }
-          return 'Tails. He pockets your coin and disappears. -50.';
+          return 'Tails. He pockets your coin and disappears. -200.';
         },
       },
       {
-        label: 'Tails — wager 50',
-        enabled: (s) => s.coin >= 50,
-        resolve: (_s, h) => {
-          if (!h.removeCoin(50)) return 'Out of coin.';
+        label: 'Tails — wager 200',
+        enabled: (s) => bGte(s.coin, 200),
+        resolve: (s, h) => {
+          if (!h.removeCoin(200)) return 'Out of coin.';
           if (Math.random() < 0.5) {
-            h.addCoin(100);
-            return 'Tails. The stranger nods grimly and is gone. +50 net.';
+            const reward = Math.floor(400 * floorCoinMult(s));
+            h.addCoin(reward);
+            return `Tails. The stranger nods grimly and is gone. +${reward - 200} net.`;
           }
-          return 'Heads. He pockets your coin and disappears. -50.';
+          return 'Heads. He pockets your coin and disappears. -200.';
         },
       },
       {
@@ -147,25 +167,27 @@ export const RANDOM_EVENTS: RandomEventDef[] = [
     weight: 8,
     title: 'A small hand in your pocket',
     flavor: 'A goblin child is rifling your satchel with practiced fingers. They have not yet noticed you noticed.',
-    gate: (s) => s.coin >= 50 && s.skills.combat.level >= 3,
+    gate: (s) => bGte(s.coin, 100) && s.skills.combat.level >= 3,
     choices: [
       {
         label: 'Grab them',
         description: 'Quick reflexes might recover coin and intimidate.',
-        resolve: (_s, h) => {
+        resolve: (s, h) => {
           if (Math.random() < 0.65) {
-            h.addCoin(15);
-            return 'You catch their wrist. They drop your coin AND theirs and run. +15.';
+            const reward = Math.floor(200 * floorCoinMult(s));
+            h.addCoin(reward);
+            return `You catch their wrist. They drop your coin AND theirs and run. +${reward}.`;
           }
-          h.removeCoin(20);
-          return 'They wriggle free with a handful of your coin. -20.';
+          const loss = Math.floor(100 * floorCoinMult(s));
+          h.removeCoin(loss);
+          return `They wriggle free with a handful of your coin. -${loss}.`;
         },
       },
       {
         label: 'Pretend not to notice',
         description: 'They are very small. Let them have a small win.',
-        resolve: (_s, h) => {
-          const amt = 8 + Math.floor(Math.random() * 15);
+        resolve: (s, h) => {
+          const amt = Math.floor((40 + Math.random() * 60) * floorCoinMult(s));
           h.removeCoin(amt);
           return `They make off with ${amt} coin and a whoop of triumph.`;
         },

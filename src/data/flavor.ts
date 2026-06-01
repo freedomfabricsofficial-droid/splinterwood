@@ -1,4 +1,8 @@
 // Status line variants. Cycles every ~10s when idle. Player-voice (dry, journal style).
+//
+// A small fraction of these are cryptic — they read normal but slightly off.
+// Bible rule: funny if naive, ominous if you know. Players should not feel
+// alarmed reading them. They should only feel something on a second read.
 export const IDLE_STATUSES: string[] = [
   'idling at the tavern',
   'twiddling thumbs',
@@ -18,6 +22,13 @@ export const IDLE_STATUSES: string[] = [
   'admiring own reflection in tankard',
   'eavesdropping on the bards',
   'doing very important nothing',
+  // Cryptic drips — read as ordinary on first pass
+  'trying to remember what was important',
+  'feeling watched in a friendly way',
+  'not thinking about it',
+  'noticing how clean the inn is',
+  'wondering how long this has been going on',
+  'failing to remember a face',
 ];
 
 // Active status template: "chopping a Crooked Twig", "in heroic combat with a Hungover Goblin"

@@ -12,7 +12,8 @@
 
 export type SfxId =
   | 'click' | 'chop' | 'craft' | 'hit' | 'defeat' | 'player_hit'
-  | 'levelup' | 'quest_complete' | 'coin' | 'denied' | 'hire';
+  | 'levelup' | 'quest_complete' | 'coin' | 'denied' | 'hire'
+  | 'mine' | 'smith';
 
 interface AudioSettings {
   masterEnabled: boolean;
@@ -110,14 +111,90 @@ export function unlockAudio(): void {
 
 // ---------- SFX dispatch ----------
 
+// File-based sfx mapping. Sound files live in public/audio/sfx/.
+// Anything in this map gets played from file; anything NOT in this map falls
+// back to the synth version below.
+//
+// To add a file-based sfx: drop the .ogg into public/audio/sfx/ and add a
+// mapping line here. To revert one back to synth: remove its line here.
+const SFX_FILES: Partial<Record<SfxId, string>> = {
+  chop:    '/audio/sfx/woodchop.ogg',
+  mine:    '/audio/sfx/miningdone.ogg',
+  smith:   '/audio/sfx/smithingdone.ogg',
+  levelup: '/audio/sfx/getperkpoint.ogg',
+  coin:    '/audio/sfx/sellcoin.ogg',
+  click:   '/audio/sfx/click.ogg',
+};
+
+// Cached decoded audio buffers — decoded once on first play of each sfx.
+// Keeps subsequent plays cheap (no fetch, no decode).
+const _sfxBuffers: Partial<Record<SfxId, AudioBuffer | 'loading' | 'failed'>> = {};
+
 export function playSfx(id: SfxId): void {
   if (!_settings.masterEnabled) return;
   const ctx = ensureCtx();
   if (!ctx || !_sfxGain) return;
-  synthSfx(ctx, _sfxGain, id);
+
+  // If we have a file mapping for this sfx, use it. Otherwise synth.
+  const filePath = SFX_FILES[id];
+  if (filePath) {
+    playSfxFile(ctx, _sfxGain, id, filePath);
+  } else {
+    synthSfx(ctx, _sfxGain, id);
+  }
 }
 
-// Synthesized placeholder sounds. Replace by loading real audio files when ready.
+// Plays a file-based sfx. On first call, fetches and decodes the file then
+// caches the buffer. If the load fails, falls back to synth and stays on
+// synth for all future plays of that id.
+function playSfxFile(ctx: AudioContext, dest: GainNode, id: SfxId, url: string): void {
+  const cached = _sfxBuffers[id];
+
+  // Already loaded — play immediately
+  if (cached && cached !== 'loading' && cached !== 'failed') {
+    playBuffer(ctx, dest, cached);
+    return;
+  }
+  // Previously failed — fall back to synth permanently
+  if (cached === 'failed') {
+    synthSfx(ctx, dest, id);
+    return;
+  }
+  // Currently loading — play synth this time, the file will be ready next time
+  if (cached === 'loading') {
+    synthSfx(ctx, dest, id);
+    return;
+  }
+
+  // First play — kick off load, also play synth so user hears SOMETHING now
+  _sfxBuffers[id] = 'loading';
+  synthSfx(ctx, dest, id);
+  fetch(url)
+    .then(r => {
+      if (!r.ok) throw new Error(`${r.status} on ${url}`);
+      return r.arrayBuffer();
+    })
+    .then(buf => ctx.decodeAudioData(buf))
+    .then(decoded => {
+      _sfxBuffers[id] = decoded;
+      console.log(`[sfx] ✓ loaded ${url}`);
+    })
+    .catch(err => {
+      console.warn(`[sfx] failed to load ${url}, falling back to synth permanently:`, err.message);
+      _sfxBuffers[id] = 'failed';
+    });
+}
+
+// Plays a decoded AudioBuffer through the sfx gain node.
+function playBuffer(ctx: AudioContext, dest: GainNode, buf: AudioBuffer): void {
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(dest);
+  src.start();
+}
+
+// Synthesized placeholder sounds. Used as fallback for any sfx without a
+// file mapping in SFX_FILES.
 function synthSfx(ctx: AudioContext, dest: GainNode, id: SfxId): void {
   const now = ctx.currentTime;
   switch (id) {
@@ -132,7 +209,24 @@ function synthSfx(ctx: AudioContext, dest: GainNode, id: SfxId): void {
     case 'coin':        blip(ctx, dest, now, 'triangle', 880, 0.05, 0.05);  break;
     case 'denied':      blip(ctx, dest, now, 'square',   200, 0.10, 0.10);  break;
     case 'hire':        fanfare(ctx, dest, now);                            break;
+    case 'mine':        tink(ctx, dest, now);                               break;
+    case 'smith':       clang(ctx, dest, now);                              break;
   }
+}
+
+// Pickaxe on stone — short metallic ping with a quick decay
+function tink(ctx: AudioContext, dest: GainNode, when: number): void {
+  blip(ctx, dest, when, 'square', 1400, 0.06, 0.04);
+  blip(ctx, dest, when + 0.005, 'triangle', 700, 0.04, 0.08);
+}
+
+// Hammer on anvil — heavier two-strike with ringing overtones
+function clang(ctx: AudioContext, dest: GainNode, when: number): void {
+  // Low thud
+  blip(ctx, dest, when, 'square', 110, 0.18, 0.05);
+  // Bright ringing
+  blip(ctx, dest, when + 0.01, 'triangle', 880,  0.06, 0.25);
+  blip(ctx, dest, when + 0.01, 'triangle', 1320, 0.04, 0.20);
 }
 
 // Grander 6-note fanfare with a held final chord for hire celebration
@@ -293,7 +387,13 @@ let _pendingTrackId: string | null = null;
 const CROSSFADE_SEC = 1.8;
 
 export function setMusicTrack(trackId: string | null): void {
-  if (_pendingTrackId === trackId) return;
+  // Only short-circuit if the requested track is ALREADY playing (audio element
+  // present, not null). This way, if autoplay was blocked on first attempt,
+  // a later user-gesture click will retry from scratch.
+  if (_currentTrack && _currentTrack.id === trackId) {
+    return;
+  }
+  console.log(`[music] setMusicTrack(${trackId})`);
   _pendingTrackId = trackId;
 
   // Tear down current if it exists
@@ -303,14 +403,24 @@ export function setMusicTrack(trackId: string | null): void {
   }
 
   if (!trackId) return;
-  if (!_settings.masterEnabled || !_settings.musicEnabled) return;
+  if (!_settings.masterEnabled || !_settings.musicEnabled) {
+    console.log(`[music] Skipping start: masterEnabled=${_settings.masterEnabled} musicEnabled=${_settings.musicEnabled}`);
+    return;
+  }
 
   const cfg = TRACKS[trackId];
-  if (!cfg) return;
+  if (!cfg) {
+    console.warn(`[music] No track configured for "${trackId}"`);
+    return;
+  }
 
   const ctx = ensureCtx();
-  if (!ctx || !_musicGain) return;
+  if (!ctx || !_musicGain) {
+    console.warn(`[music] Audio context not ready: ctx=${!!ctx} musicGain=${!!_musicGain}`);
+    return;
+  }
 
+  console.log(`[music] Starting ${cfg.backend} track for "${trackId}" from ${cfg.url ?? '(synth)'}`);
   if (cfg.backend === 'file' && cfg.url) {
     startFileTrack(ctx, _musicGain, trackId, cfg);
   } else if (cfg.backend === 'synth') {
@@ -385,8 +495,11 @@ function startFileTrack(ctx: AudioContext, dest: GainNode, id: string, cfg: Trac
   // If the configured file is missing (404) or otherwise fails to load,
   // fall back to MUSIC_FALLBACK_FILE so the player isn't left in silence.
   audio.addEventListener('error', () => {
-    if (cfg.url === MUSIC_FALLBACK_FILE) return; // already on fallback; nothing to do
-    console.warn(`[music] Failed to load ${cfg.url}; falling back to ${MUSIC_FALLBACK_FILE}`);
+    console.warn(`[music] Failed to load ${cfg.url} (error event). Check that the file exists at public${cfg.url}`);
+    if (cfg.url === MUSIC_FALLBACK_FILE) {
+      console.error(`[music] Even the fallback ${MUSIC_FALLBACK_FILE} failed. Music will not play.`);
+      return;
+    }
     if (_currentTrack && _currentTrack.id === id) {
       fadeOutAndStop(_currentTrack);
       _currentTrack = null;
@@ -395,7 +508,13 @@ function startFileTrack(ctx: AudioContext, dest: GainNode, id: string, cfg: Trac
     startFileTrack(ctx, dest, id, fallbackCfg);
   });
 
-  audio.play().catch(() => { /* autoplay blocked - will retry on next gesture */ });
+  audio.addEventListener('canplaythrough', () => {
+    console.log(`[music] ✓ Loaded ${cfg.url}, playing`);
+  });
+
+  audio.play().catch((err) => {
+    console.warn(`[music] play() rejected:`, err.message, '— browser autoplay policy. Will retry on next user gesture.');
+  });
 
   const now = ctx.currentTime;
   trackGain.gain.linearRampToValueAtTime(targetGain, now + CROSSFADE_SEC);

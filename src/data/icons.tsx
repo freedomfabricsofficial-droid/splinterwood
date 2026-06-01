@@ -505,38 +505,42 @@ export const FOE_ICONS: Record<string, (size?: number) => JSX.Element> = {
       <path d="M60 84 L64 92" strokeWidth="2" />
     </HandDrawn>
   ),
-};
-
-// ============================================================
-// LOOKUP HELPERS
-// ============================================================
-
-export function getItemIcon(itemId: string, size?: number): JSX.Element | null {
-  const fn = ITEM_ICONS[itemId];
-  return fn ? fn(size) : null;
-}
-
-export function getTreeIcon(nodeId: string, size?: number): JSX.Element | null {
-  const fn = WOODCUTTING_ICONS[nodeId];
-  return fn ? fn(size) : null;
-}
-
-export function getMineIcon(nodeId: string, size?: number): JSX.Element | null {
-  const fn = MINING_ICONS[nodeId];
-  return fn ? fn(size) : null;
-}
-
-export function getFoeIcon(foeId: string, size?: number): JSX.Element | null {
-  const fn = FOE_ICONS[foeId];
-  return fn ? fn(size) : null;
-}
-
-// Generic placeholder when an icon hasn't been authored yet
-export function GenericIcon({ size = 64 }: { size?: number }) {
-  return (
-    <HandDrawn seed={999} size={size}>
-      <rect x="20" y="20" width="60" height="60" strokeDasharray="4 3" />
-      <text x="50" y="58" textAnchor="middle" fontFamily="Special Elite, monospace" fontSize="20" fill="#5a3f24" stroke="none">?</text>
+  brigand: (size = 64) => (
+    <HandDrawn seed={605} size={size}>
+      {/* hooded figure */}
+      <path d="M50 16 Q30 18 28 46 L32 82 L62 82 L66 48 Q66 18 50 16 Z" />
+      <path d="M34 40 Q42 34 50 34 Q58 34 64 40 L62 50 Q56 54 48 54 Q40 54 36 50 Z" />
+      <line x1="40" y1="46" x2="46" y2="46" strokeWidth="1.4" />
+      <line x1="52" y1="46" x2="58" y2="46" strokeWidth="1.4" />
+      {/* coin sack slung over the shoulder */}
+      <ellipse cx="70" cy="68" rx="10" ry="11" />
+      <path d="M63 60 Q70 55 77 60" />
+      <text x="70" y="72" textAnchor="middle" fontFamily="Special Elite, monospace" fontSize="10" fill="#5a3f24" stroke="none">¢</text>
     </HandDrawn>
-  );
-}
+  ),
+  taxman: (size = 64) => (
+    <HandDrawn seed={606} size={size}>
+      {/* tall thin body */}
+      <path d="M43 26 L57 26 L59 84 L41 84 Z" />
+      {/* head + tall hat */}
+      <circle cx="50" cy="20" r="8" />
+      <path d="M42 14 L58 14 L56 2 L44 2 Z" />
+      <circle cx="47" cy="19" r="1" />
+      <circle cx="53" cy="19" r="1" />
+      <path d="M46 24 Q50 26 54 24" />
+      {/* ledger held in one hand */}
+      <rect x="28" y="50" width="16" height="20" />
+      <line x1="32" y1="56" x2="40" y2="56" strokeWidth="0.7" />
+      <line x1="32" y1="60" x2="40" y2="60" strokeWidth="0.7" />
+      <line x1="32" y1="64" x2="40" y2="64" strokeWidth="0.7" />
+      {/* the pointing arm of authority */}
+      <path d="M59 44 L76 40" />
+    </HandDrawn>
+  ),
+  golem: (size = 64) => (
+    <HandDrawn seed={607} size={size} scale={1.4}>
+      {/* heavy blocky body */}
+      <path d="M30 50 L34 84 L66 84 L70 50 Z" />
+      {/* bowed stone head */}
+      <rect x="38" y="30" width="24" height="22" />
+      {/* sad eyes + frown 

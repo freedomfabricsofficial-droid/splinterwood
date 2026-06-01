@@ -8,6 +8,7 @@
 // from existing item/foe/tree data (no manual entries needed).
 
 import type { GameState } from '../types';
+import { bGte, bGt } from '../util/bignum';
 import { ITEMS } from './items';
 import { WOODCUTTING_NODES } from './woodcutting';
 import { COMBAT_FOES } from './combat';
@@ -31,7 +32,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: 'The First Cut',
     description: 'You held an axe. You raised it. A twig was reduced. A career began.',
     hint: 'Chop something.',
-    check: (s) => (s.skills.woodcutting.xp ?? 0) > 0,
+    check: (s) => bGt(s.skills.woodcutting.xp, 0),
   },
   {
     id: 'first_carve',
@@ -39,7 +40,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: 'Apprentice Whittler',
     description: 'A shape, recognizable. From wood. By your hand. The Council should be informed.',
     hint: 'Carve your first item.',
-    check: (s) => (s.skills.carving.xp ?? 0) > 0,
+    check: (s) => bGt(s.skills.carving.xp, 0),
   },
   {
     id: 'first_kill',
@@ -47,7 +48,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: 'A Regrettable Necessity',
     description: 'One fewer foe in the world. The ledger notes this without comment.',
     hint: 'Defeat any foe.',
-    check: (s) => (s.skills.combat.xp ?? 0) > 0,
+    check: (s) => bGt(s.skills.combat.xp, 0),
   },
   {
     id: 'rich_1k',
@@ -55,7 +56,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: 'A Heavy Purse',
     description: 'A thousand coins. Most of it earned. Some of it found. None of it spent yet.',
     hint: 'Accumulate 1,000 coin.',
-    check: (s) => s.coin >= 1000,
+    check: (s) => bGte(s.coin, 1000),
   },
   {
     id: 'rich_10k',
@@ -63,7 +64,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: 'Disreputably Wealthy',
     description: 'Ten thousand coins. People nod at you in the street. They are afraid.',
     hint: 'Accumulate 10,000 coin.',
-    check: (s) => s.coin >= 10000,
+    check: (s) => bGte(s.coin, 10000),
   },
   {
     id: 'wc_25',

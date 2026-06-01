@@ -9,6 +9,7 @@
 // short durations and high magnitudes.
 
 import type { GameState } from '../types';
+import { Big, bAdd, bMul, bFloor, bGte, bLt } from '../util/bignum';
 
 export interface AbilityDef {
   id: string;
@@ -99,9 +100,10 @@ export const ABILITIES: AbilityDef[] = [
     unlockHint: 'Combat Lv 5',
     description: 'If below 50% HP, heal to 50%.',
     trigger: (s) => {
-      if (s.hp >= Math.floor(s.maxHp * 0.5)) return false;
-      s.hp = Math.floor(s.maxHp * 0.5);
-      if (s.task && s.task.kind === 'cb' && typeof s.task.playerHp === 'number') {
+      const halfMax = bFloor(bMul(s.maxHp, 0.5));
+      if (bGte(s.hp, halfMax)) return false;
+      s.hp = halfMax;
+      if (s.task && s.task.kind === 'cb' && s.task.playerHp !== undefined) {
         s.task.playerHp = s.hp;
       }
       return true;
@@ -113,6 +115,14 @@ export function getAbilityById(id: string): AbilityDef | null {
   return ABILITIES.find(a => a.id === id) ?? null;
 }
 
+import { perkEffect } from './perks';
+
+// Returns the actual cooldown for an ability after Cooler Head reduction.
+function effectiveCooldownMs(state: GameState, baseCdMs: number): number {
+  const reduction = Math.min(0.5, perkEffect(state, 'cooldown_reduction'));
+  return Math.floor(baseCdMs * (1 - reduction));
+}
+
 export function canUseAbility(state: GameState, abilityId: string): { ok: boolean; reason?: string; remainingMs: number } {
   const def = getAbilityById(abilityId);
   if (!def) return { ok: false, reason: 'unknown', remainingMs: 0 };
@@ -120,7 +130,8 @@ export function canUseAbility(state: GameState, abilityId: string): { ok: boolea
   const ast = state.abilityState?.[abilityId];
   if (ast) {
     const passed = Date.now() - ast.lastUsedAt;
-    if (passed < def.cooldownMs) return { ok: false, reason: 'cooldown', remainingMs: def.cooldownMs - passed };
+    const cd = effectiveCooldownMs(state, def.cooldownMs);
+    if (passed < cd) return { ok: false, reason: 'cooldown', remainingMs: cd - passed };
   }
   return { ok: true, remainingMs: 0 };
 }
@@ -143,5 +154,6 @@ export function cooldownRemaining(state: GameState, abilityId: string): number {
   const ast = state.abilityState?.[abilityId];
   if (!ast) return 0;
   const passed = Date.now() - ast.lastUsedAt;
-  return Math.max(0, def.cooldownMs - passed);
+  const cd = effectiveCooldownMs(state, def.cooldownMs);
+  return Math.max(0, cd - passed);
 }

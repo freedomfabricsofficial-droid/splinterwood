@@ -1,29 +1,32 @@
 import type { GameState, SkillId } from '../types';
 import { ITEMS } from '../data/items';
+import { Big, stringifyState, parseState } from '../util/bignum';
 
 const SAVE_KEY = 'splinterwood_save';
-const CURRENT_VERSION = 7;
+const CURRENT_VERSION = 15;
 
 export function freshState(): GameState {
   const now = Date.now();
   return {
     version: CURRENT_VERSION,
-    coin: 0,
-    hp: 20,
-    maxHp: 20,
+    coin: Big(0),
+    hp: Big(20),
+    maxHp: Big(20),
     inv: {},
     skills: {
-      woodcutting: { xp: 0, level: 1, perkPoints: 0, owned: {} },
-      carving:     { xp: 0, level: 1, perkPoints: 0, owned: {} },
-      combat:      { xp: 0, level: 1, perkPoints: 0, owned: {} },
-      mining:      { xp: 0, level: 1, perkPoints: 0, owned: {} },
-      smithing:    { xp: 0, level: 1, perkPoints: 0, owned: {} },
+      woodcutting: { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
+      carving:     { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
+      combat:      { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
+      mining:      { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
+      smithing:    { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
     },
     equipped: { weapon: null, shield: null },
     equipInstances: {},
+    equipStacks: {},
     equippedInst: {},
     abilityState: {},
     task: null,
+    combatTask: null,
     questIndex: 0,
     questClaimed: {},
     questFlags: {},
@@ -45,6 +48,14 @@ export function freshState(): GameState {
     counterPurchases: {},
     permBonuses: {},
     currentFloor: 'splinterwood',
+    leadershipPoints: 0,
+    leadershipOwned: {},
+    combatFirstHitConsumed: false,
+    slush: Big(0),
+    slushLifetime: Big(0),
+    loopCount: 0,
+    investmentsOwned: {},
+    expensesOwned: {},
   };
 }
 
@@ -138,6 +149,47 @@ function migrate(raw: any): GameState {
     s.version = 7;
   }
 
+  // v7 -> v8: category skill trees (Gathering/Crafting/Combat/Leadership)
+  // The old per-skill perks no longer exist with the same IDs. Clear the
+  // owned maps and refund all spent perk points by recomputing from scratch.
+  // Per user direction: we don't preserve old purchases between major
+  // skill-tree redesigns; players are expected to wipe their save if they
+  // had old perks purchased. This migration just makes the schema sane.
+  if (s.version < 8) {
+    for (const k of Object.keys(s.skills ?? {}) as SkillId[]) {
+      // wipe old perk ownership — new perk IDs are completely different
+      s.skills[k].owned = {};
+    }
+    s.leadershipPoints = s.leadershipPoints ?? 0;
+    s.leadershipOwned = s.leadershipOwned ?? {};
+    s.combatFirstHitConsumed = false;
+    s.version = 8;
+  }
+
+  // v8 -> v9: tier-prereq enforcement (must own previous-tier perk in branch).
+  // Existing saves may have illegal purchases (e.g., a Tier 3 perk without
+  // Tier 1/2 owned). Cleanest fix per user direction: wipe all category-tree
+  // perks AND leadership perks; do NOT refund points. Player starts perk
+  // selection from scratch with their current point pools.
+  if (s.version < 9) {
+    for (const k of Object.keys(s.skills ?? {}) as SkillId[]) {
+      s.skills[k].owned = {};
+    }
+    s.leadershipOwned = {};
+    s.version = 9;
+  }
+
+  // v9 -> v10: combat moves to its own parallel task slot (state.combatTask).
+  // If a save has state.task with kind='cb', migrate it over.
+  if (s.version < 10) {
+    if (s.task && s.task.kind === 'cb') {
+      s.combatTask = s.task;
+      s.task = null;
+    }
+    if (s.combatTask === undefined) s.combatTask = null;
+    s.version = 10;
+  }
+
   // Make sure schema is sane regardless of version
   const defaults = freshState();
   s = { ...defaults, ...s };
@@ -150,6 +202,125 @@ function migrate(raw: any): GameState {
   s.inv = s.inv ?? {};
   s.questClaimed = s.questClaimed ?? {};
   s.questFlags = s.questFlags ?? {};
+
+  // v10 -> v11: compress equipInstances to equipStacks. Saves with millions
+  // of individual rolls collapse to a handful of {count, mods} entries per
+  // tier. Equipped and user-locked items stay as full instances.
+  if ((s.version ?? 0) < 11) {
+    s.equipStacks = s.equipStacks ?? {};
+    const equippedSet = new Set<string>();
+    const eqInst = s.equippedInst ?? {};
+    for (const slot of Object.keys(eqInst)) {
+      const instId = eqInst[slot];
+      if (instId) equippedSet.add(instId);
+    }
+    const oldMap = s.equipInstances ?? {};
+    let compressed = 0;
+    for (const baseId of Object.keys(oldMap)) {
+      const survivors: any[] = [];
+      for (const inst of oldMap[baseId]) {
+        const isEquipped = equippedSet.has(inst.instId);
+        const isLocked = !!inst.locked;
+        if (isEquipped || isLocked) {
+          survivors.push(inst);
+          continue;
+        }
+        // Fold into stack
+        s.equipStacks[baseId] = s.equipStacks[baseId] ?? {};
+        const tier = inst.tier;
+        const tierStack = s.equipStacks[baseId][tier] ?? { count: 0, mods: {} };
+        tierStack.count++;
+        const modKey = inst.modifier ?? '';
+        tierStack.mods[modKey] = (tierStack.mods[modKey] ?? 0) + 1;
+        s.equipStacks[baseId][tier] = tierStack;
+        compressed++;
+      }
+      oldMap[baseId] = survivors;
+    }
+    if (compressed > 0) {
+      console.log(`[splinterwood] Migration v10→v11: compressed ${compressed} equipment instances into stacks.`);
+    }
+  }
+
+  // v11 -> v12: convert coin, hp, maxHp, and skills[*].xp to Decimal
+  // (BigLike) so they can scale to NGU-grade magnitudes without JS number
+  // precision loss past ~9 quadrillion.
+  if ((s.version ?? 0) < 12) {
+    if (typeof s.coin === 'number' || typeof s.coin === 'string') {
+      s.coin = Big(s.coin);
+    }
+    if (typeof s.hp === 'number' || typeof s.hp === 'string') {
+      s.hp = Big(s.hp);
+    }
+    if (typeof s.maxHp === 'number' || typeof s.maxHp === 'string') {
+      s.maxHp = Big(s.maxHp);
+    }
+    if (s.skills) {
+      for (const sk of Object.keys(s.skills)) {
+        const skill = s.skills[sk];
+        if (skill && (typeof skill.xp === 'number' || typeof skill.xp === 'string')) {
+          skill.xp = Big(skill.xp);
+        }
+      }
+    }
+    // foeHp on any active task
+    if (s.task && (typeof s.task.foeHp === 'number' || typeof s.task.foeHp === 'string')) {
+      s.task.foeHp = Big(s.task.foeHp);
+    }
+    if (s.combatTask && (typeof s.combatTask.foeHp === 'number' || typeof s.combatTask.foeHp === 'string')) {
+      s.combatTask.foeHp = Big(s.combatTask.foeHp);
+    }
+    console.log('[splinterwood] Migration v11→v12: converted coin/xp/hp to Decimal storage.');
+  }
+
+  // v12 -> v13: fix broken v12 saves where coin/xp were serialized as
+  // untagged strings instead of Decimal-tagged strings (the v0.81
+  // serializer bug). After this migration, the live save will round-trip
+  // correctly because the new serializer explicitly tags Decimal fields.
+  if ((s.version ?? 0) < 13) {
+    // Force coercion of any string/number coin/xp/hp values to Decimal.
+    // The parseState reviver in v0.81+ already does this, but old corrupt
+    // saves may have escaped that path. This is the belt-and-suspenders
+    // pass.
+    const toDec = (v: any) => {
+      if (v === null || v === undefined) return v;
+      if (typeof v === 'string' || typeof v === 'number') return Big(v);
+      return v; // already a Decimal
+    };
+    s.coin = toDec(s.coin);
+    s.hp = toDec(s.hp);
+    s.maxHp = toDec(s.maxHp);
+    if (s.skills) {
+      for (const sk of Object.keys(s.skills)) {
+        if (s.skills[sk]) s.skills[sk].xp = toDec(s.skills[sk].xp);
+      }
+    }
+    if (s.task) {
+      s.task.foeHp = toDec(s.task.foeHp);
+      s.task.playerHp = toDec(s.task.playerHp);
+    }
+    if (s.combatTask) {
+      s.combatTask.foeHp = toDec(s.combatTask.foeHp);
+      s.combatTask.playerHp = toDec(s.combatTask.playerHp);
+    }
+    console.log('[splinterwood] Migration v12→v13: fixed Decimal serialization for coin/xp/hp/foeHp.');
+  }
+
+  // v13 -> v14: prestige ("Cook the Books") — Slush carryover currency + Investments.
+  if ((s.version ?? 0) < 14) {
+    s.slush = (s.slush === undefined || s.slush === null) ? Big(0) : Big(s.slush);
+    s.slushLifetime = (s.slushLifetime === undefined || s.slushLifetime === null) ? Big(0) : Big(s.slushLifetime);
+    s.loopCount = s.loopCount ?? 0;
+    s.investmentsOwned = s.investmentsOwned ?? {};
+    console.log('[splinterwood] Migration v13→v14: added prestige (Slush + Investments).');
+  }
+
+  // v14 -> v15: Expenses (within-run coin sink).
+  if ((s.version ?? 0) < 15) {
+    s.expensesOwned = s.expensesOwned ?? {};
+    console.log('[splinterwood] Migration v14→v15: added Expenses (coin sink).');
+  }
+
   s.version = CURRENT_VERSION;
   return s;
 }
@@ -158,10 +329,14 @@ export function loadGame(): { state: GameState; offlineSeconds: number } {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) return { state: freshState(), offlineSeconds: 0 };
   try {
-    const parsed = JSON.parse(raw);
+    // parseState revives Decimal-tagged strings back to Decimal instances.
+    // For old saves (pre-v12), coin/hp/xp will come back as plain numbers;
+    // the migrate() step below converts them to Decimals.
+    const parsed = parseState(raw);
     const state = migrate(parsed);
     const now = Date.now();
-    const elapsed = Math.min((now - state.lastTick) / 1000, 12 * 3600);
+    // NGU-style offline progress: no cap. Full elapsed time always counts.
+    const elapsed = Math.max(0, (now - state.lastTick) / 1000);
     state.lastTick = now;
     return { state, offlineSeconds: elapsed > 5 ? elapsed : 0 };
   } catch (e) {
@@ -173,20 +348,21 @@ export function loadGame(): { state: GameState; offlineSeconds: number } {
 export function saveGame(state: GameState): void {
   if ((window as any).__splinterwood_wiped) return;
   state.lastSave = Date.now();
-  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  try {
+    // stringifyState uses bignumReplacer to convert Decimal instances to
+    // tagged strings, so JSON.stringify doesn't drop their precision.
+    const serialized = stringifyState(state);
+    localStorage.setItem(SAVE_KEY, serialized);
+    (window as any).__splinterwood_save_failed = false;
+  } catch (e) {
+    if (!(window as any).__splinterwood_save_failed) {
+      (window as any).__splinterwood_save_failed = true;
+      const sizeKb = Math.round(stringifyState(state).length / 1024);
+      console.error(`[splinterwood] SAVE FAILED — payload ${sizeKb} KB, localStorage quota likely exceeded.`);
+      console.error('Open dev tools, run window.exportSave() to download a copy before reload.');
+      console.error(e);
+    }
+  }
 }
 
-export function wipeSave(): void {
-  // Mark the wipe so the beforeunload save handler skips writing back to localStorage
-  // before the page actually reloads.
-  (window as any).__splinterwood_wiped = true;
-  localStorage.removeItem(SAVE_KEY);
-}
-
-export function exportSave(state: GameState): string {
-  return btoa(JSON.stringify(state));
-}
-
-export function importSave(encoded: string): GameState {
-  return migrate(JSON.parse(atob(encoded)));
-}
+// Expose a manual export for emergency rescue when auto-

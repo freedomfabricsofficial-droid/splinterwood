@@ -8,6 +8,8 @@ import { QUEST_STEPS } from '../data/quests';
 import { ITEMS } from '../data/items';
 import { playSfx, getAudioSettings, setAudioSettings } from '../systems/audio';
 import { RANDOM_EVENTS, devFireEvent } from '../data/events';
+import { Big, bAdd } from '../util/bignum';
+import { cumulativeXpToLevelBig } from '../systems/leveling';
 import { FLOORS, setCurrentFloor } from '../data/floors';
 import type { FloorId } from '../data/floors';
 
@@ -36,19 +38,16 @@ export function DevPanel({ state, onAction }: { state: GameState; onAction: () =
   }
 
   function addCoin(n: number) {
-    state.coin += n;
+    state.coin = bAdd(state.coin, n);
     log(`[DEV] +${n} coin`, 'gold');
     onAction();
   }
 
   function setLevel(skill: SkillId, lvl: number) {
-    state.skills[skill].level = Math.max(1, Math.min(99, lvl));
-    // recompute XP so the bar isn't stuck. Set XP to the cumulative for that level.
-    let sum = 0;
-    for (let i = 1; i < state.skills[skill].level; i++) {
-      sum += Math.floor(50 * Math.pow(i, 1.7));
-    }
-    state.skills[skill].xp = sum;
+    state.skills[skill].level = Math.max(1, lvl);
+    // Set XP to the cumulative for the target level via the Decimal helper
+    // so high levels don't lose precision.
+    state.skills[skill].xp = cumulativeXpToLevelBig(state.skills[skill].level);
     log(`[DEV] ${skill} -> Lv ${state.skills[skill].level}`, 'gold');
     onAction();
   }

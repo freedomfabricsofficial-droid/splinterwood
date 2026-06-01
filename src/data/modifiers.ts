@@ -117,13 +117,51 @@ function weightedPick<T extends { weight: number }>(pool: T[]): T {
   return pool[pool.length - 1];
 }
 
-export function rollTier(): QualityTier {
-  const pool = QUALITY_TIERS.map(t => ({ tier: t, weight: TIER_WEIGHTS[t] }));
-  return weightedPick(pool).tier;
+// Roll options for crafted items:
+//   - tierUpChance: + chance to upgrade one tier on the roll (Careful Cut, Steady Pour)
+//   - noRegrettable: never roll regrettable (No Slop)
+//   - unreasonableChance: forced chance to roll Unreasonable directly (Master Work)
+//   - alwaysTierUp: bumps the rolled tier up one (The Maker's Circle capstone)
+//   - modifierRollBoost: chance the modifier "none" outcome is rerolled into a real modifier
+export interface RollOptions {
+  tierUpChance?: number;
+  noRegrettable?: boolean;
+  unreasonableChance?: number;
+  alwaysTierUp?: boolean;
+  modifierRollBoost?: number;
 }
 
-export function rollModifier(): string | null {
-  const m = weightedPick(MODIFIERS);
+export function rollTier(opts: RollOptions = {}): QualityTier {
+  // Master Work: small forced chance for Unreasonable
+  if (opts.unreasonableChance && Math.random() < opts.unreasonableChance) {
+    return 'unreasonable';
+  }
+  // Filter the weight pool if we're suppressing regrettable
+  let pool = QUALITY_TIERS.map(t => ({ tier: t, weight: TIER_WEIGHTS[t] }));
+  if (opts.noRegrettable) pool = pool.filter(p => p.tier !== 'regrettable');
+  let tier = weightedPick(pool).tier;
+  // Tier-up chance bumps the tier one rank (Careful Cut / Steady Pour)
+  if (opts.tierUpChance && Math.random() < opts.tierUpChance) {
+    tier = bumpTier(tier);
+  }
+  // The Maker's Circle: ALWAYS bump up one tier
+  if (opts.alwaysTierUp) tier = bumpTier(tier);
+  return tier;
+}
+
+function bumpTier(t: QualityTier): QualityTier {
+  const idx = QUALITY_TIERS.indexOf(t);
+  if (idx < 0 || idx >= QUALITY_TIERS.length - 1) return t;
+  return QUALITY_TIERS[idx + 1];
+}
+
+export function rollModifier(opts: RollOptions = {}): string | null {
+  let m = weightedPick(MODIFIERS);
+  // Modifier Sense: if we rolled "none", reroll with the boost%
+  if (m.id === 'none' && opts.modifierRollBoost && Math.random() < opts.modifierRollBoost) {
+    const realMods = MODIFIERS.filter(x => x.id !== 'none');
+    if (realMods.length > 0) m = weightedPick(realMods);
+  }
   return m.id === 'none' ? null : m.id;
 }
 

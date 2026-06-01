@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Splinterwood Ledger — Progression Plan</title>
+<style>
+  body {
+    font-family: 'Georgia', 'Iowan Old Style', serif;
+    max-width: 880px;
+    margin: 32px auto;
+    padding: 0 32px 80px;
+    color: #2a1f15;
+    background: #f4ebd5;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 2.1em;
+    border-bottom: 2px solid #5e4024;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+  h1 + .subtitle {
+    font-style: italic;
+    color: #6b5a3e;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: 1.5em;
+    margin-top: 40px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #b8a577;
+  }
+  h3 {
+    font-size: 1.15em;
+    margin-top: 24px;
+    color: #3d2810;
+  }
+  .phase {
+    background: #ffffff;
+    border: 1px solid #c4ad7b;
+    border-radius: 4px;
+    padding: 18px 24px;
+    margin-bottom: 18px;
+    box-shadow: 2px 2px 0 rgba(94, 64, 36, 0.08);
+  }
+  .phase .label {
+    display: inline-block;
+    font-size: 0.78em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background: #5e4024;
+    padding: 2px 10px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+  }
+  .phase.done .label { background: #4a6a30; }
+  .phase.next .label { background: #a8761c; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  blockquote {
+    margin: 12px 0;
+    padding: 8px 16px;
+    border-left: 3px solid #b8a577;
+    color: #4a3b22;
+    font-style: italic;
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .audit-section {
+    background: #fffefa;
+    border: 1px solid #d7c896;
+    padding: 14px 22px;
+    margin: 12px 0;
+    border-radius: 4px;
+  }
+  .audit-section h3 { margin-top: 8px; }
+  .keep h3 { color: #4a6a30; }
+  .gap h3 { color: #963d2b; }
+  .meta {
+    font-size: 0.85em;
+    color: #6b5a3e;
+    border-top: 1px solid #c4ad7b;
+    margin-top: 48px;
+    padding-top: 12px;
+  }
+  code {
+    font-family: 'Consolas', monospace;
+    background: rgba(0,0,0,0.05);
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 0.92em;
+  }
+</style>
+</head>
+<body>
+
+<h1>The Splinterwood Ledger</h1>
+<div class="subtitle">Progression Plan — making the game one players can't put down</div>
+
+<h2>The thesis</h2>
+<p>
+  Splinterwood Ledger today has a strong aesthetic identity, distinctive voice,
+  good multi-skill interdependency, helpers-as-automation, and a satisfying
+  modifier-and-tier roll system. What it doesn't have is a reason to play tomorrow.
+  This plan adds the four pillars common to every long-running idle game on Steam —
+  prestige, exponential scaling, a visible medium-term hook, and surprise unlocks —
+  while keeping everything that already works.
+</p>
+
+<h2>What's already working (don't touch)</h2>
+
+<div class="audit-section keep">
+  <h3>Aesthetic and voice</h3>
+  <ul>
+    <li>Hand-drawn pencil-sketch ledger style is genuinely distinctive in the genre</li>
+    <li>Maggie's character, item flavor text, and the writing have personality — most idle games are voiceless</li>
+  </ul>
+</div>
+
+<div class="audit-section keep">
+  <h3>Existing mechanics worth preserving</h3>
+  <ul>
+    <li>Multi-skill interdependency (woodcutting feeds carving)</li>
+    <li>Helpers as automation</li>
+    <li>Tier + modifier roll system — variable-reward dopamine works</li>
+    <li>Story bible: the loop-in-hell premise is exactly the right frame for a prestige system</li>
+  </ul>
+</div>
+
+<h2>What's missing (the problems to solve)</h2>
+
+<div class="audit-section gap">
+  <h3>Gap #1 — No prestige / no compounding loop</h3>
+  <p>
+    The game progresses linearly: gain XP → level up → unlock more. There's no reset
+    mechanic that trades progress for permanent multipliers. Without this, players hit
+    a wall and have no answer to "why keep playing?"
+  </p>
+  <p>
+    The Daily Bread buffs are a baby version of this but they trickle in from streak
+    claiming, not from gameplay choices.
+  </p>
+</div>
+
+<div class="audit-section gap">
+  <h3>Gap #2 — Numbers don't go exponential</h3>
+  <p>
+    Tier 2 gives ~2× tier 1; tier 3 gives ~3×. Linear-ish. Idle game players come
+    for the exponential growth fantasy — going from 100 coin/hour to 100 million
+    coin/hour over the course of play. Linear progression eventually feels like a chore.
+  </p>
+</div>
+
+<div class="audit-section gap">
+  <h3>Gap #3 — No medium-term hook</h3>
+  <p>
+    Why log in tomorrow? Right now: claim Daily Bread + collect a letter + chip
+    away at the same tasks. Compare to Melvor ("today I'll hit Lv 70 Smithing and
+    unlock Adamant gear") or NGU ("today my titans clear boss 12"). Splinterwood
+    needs a clear "what am I working toward right now" answer at all times.
+  </p>
+</div>
+
+<div class="audit-section gap">
+  <h3>Gap #4 — No surprises</h3>
+  <p>
+    New tier of tree = harder tree. New foe = harder foe. The structure repeats with
+    bigger numbers but no new mechanics revealed. What hooks players at the 10-hour
+    mark in NGU and similar is "wait, I can do <em>that</em> now?" Splinterwood's
+    story bible hints at mechanical surprises (Maggie's reveal, Laileb, the floor 4
+    trapped soul) but they aren't tied to gameplay-changing unlocks.
+  </p>
+</div>
+
+<h2>The plan</h2>
+
+<p>
+  Five phases, ordered by impact. Each phase has a goal and a list of things to
+  build. Specifics (numbers, formulas, exact unlocks) get decided when we get to
+  each phase. The order matters: don't start phase 3 until phase 1 and 2 are
+  landed and tested.
+</p>
+
+<div class="phase next">
+  <span class="label">Phase 1 — Next up</span>
+  <h3>Remove level caps and convert to exponential growth</h3>
+  <p>
+    Foundation work that everything else depends on. Without exponential scaling,
+    prestige multipliers won't feel meaningful and the game stays linear.
+  </p>
+  <ul>
+    <li>Remove the 99-level cap on all skills</li>
+    <li>Rebalance the level cost curve so progression remains satisfying at high levels</li>
+    <li>Convert XP rewards, coin gains, and combat numbers to scale exponentially with skill level</li>
+    <li>Update UI to handle big numbers (1.4M, 23.7B, etc.) cleanly</li>
+    <li>Verify the existing stack-compressed inventory and adaptive offline tick survive the new scaling</li>
+  </ul>
+  <p><strong>Success criteria:</strong> a player at level 200 sees numbers orders of magnitude beyond a level 20 player, and the curve still feels rewarding to climb.</p>
+</div>
+
+<div class="phase">
+  <span class="label">Phase 2</span>
+  <h3>Build a prestige / loop system</h3>
+  <p>
+    The biggest single fix. The story bible is already about being trapped in
+    repeating loops in hell — the mechanics should mirror it. This is where
+    Splinterwood gets its long-term hook.
+  </p>
+  <ul>
+    <li>Define what "completing a loop" means narratively and mechanically (kill a final-floor boss? Reach a milestone? Specific quest?)</li>
+    <li>Design the prestige currency: what is it called, how is it earned, what does it represent in fiction</li>
+    <li>Decide what carries over between loops (permanent upgrades, certain items, story flags, equipment) and what resets (skills? coin? all of it?)</li>
+    <li>Design the prestige shop / tree: what can the player buy with prestige currency
+      <ul>
+        <li>XP gain multipliers (global and per-skill)</li>
+        <li>Coin find / drop rate multipliers</li>
+        <li>Starting helpers already hired for the next loop</li>
+        <li>Skip the early game (start at higher base level)</li>
+        <li>Unlock new mechanics in subsequent loops (loop 1 has 3 skills, loop 2 unlocks a fourth)</li>
+        <li>Aesthetic rewards (new Maggie letter style, new margin doodles)</li>
+      </ul>
+    </li>
+    <li>Always show the prestige preview before commit: "After this loop, your gather speed will be 4× permanently"</li>
+    <li>Write the narrative around the first prestige — Maggie's reveal, what the loop means, why the player is doing this again</li>
+  </ul>
+  <p><strong>Success criteria:</strong> the player completes their first loop, sees a tangible multiplier on the next run, and feels eager to start again.</p>
+</div>
+
+<div class="phase">
+  <span class="label">Phase 3</span>
+  <h3>Add exponential scaling on top of current numbers</h3>
+  <p>
+    Even before prestige is unlocked, the player should feel their power compounding
+    inside a single run. Two layers stack to give this feel.
+  </p>
+  <ul>
+    <li>Build a "Total Multiplier" or similar tracked stat that grows with playtime / total XP / total kills, visible somewhere prominent</li>
+    <li>Build skill synergies: every N levels of woodcutting grants a permanent X% bonus to carving XP, and so on for every meaningful skill pair</li>
+    <li>Display these multipliers in the player's stats so they can see them growing</li>
+    <li>Audit existing balance to confirm the new scaling doesn't trivialize early content</li>
+  </ul>
+  <p><strong>Success criteria:</strong> a player can point to a number on their screen and say "look how much stronger I've gotten in the last hour."</p>
+</div>
+
+<div class="phase">
+  <span class="label">Phase 4</span>
+  <h3>Make the medium-term goal explicit in the UI</h3>
+  <p>
+    Players should always know what they're working toward without having to think about it.
+  </p>
+  <ul>
+    <li>Add a persistent "Next Unlock" or "Currently Pursuing" element somewhere prominent</li>
+    <li>Shows the next thing the player will gain (next tier unlock, next quest milestone, next prestige threshold, next mechanic) with current progress</li>
+    <li>Updates dynamically based on game state — never empty, never stale</li>
+    <li>Optional: list of secondary goals the player has unlocked but not finished</li>
+  </ul>
+  <p><strong>Success criteria:</strong> ask any player "what are you working on right now?" and they can answer in one sentence.</p>
+</div>
+
+<div class="phase">
+  <span class="label">Phase 5</span>
+  <h3>Front-load surprises in the first 5 hours</h3>
+  <p>
+    The first hour is the retention bottleneck. The first five hours determine
+    whether the player will still be playing in week two. Add one "wait, what?"
+    moment every hour for the early game.
+  </p>
+  <ul>
+    <li>Hour 1 surprise — something the player didn't expect (could be: a second resource discovered mid-task, a letter with a surprise gift, a foe drops something unprecedented, a new UI element unlocks)</li>
+    <li>Hour 3 surprise — bigger reveal (a hidden NPC speaks, a new mechanic appears, a story moment lands)</li>
+    <li>Hour 5 surprise — meta-level reveal that re-frames the game (per story bible, Maggie's mask starts slipping, time inconsistencies become visible)</li>
+    <li>Bake these into the existing quest / journal / story-letter systems — don't bolt them on as separate things</li>
+  </ul>
+  <p><strong>Success criteria:</strong> a player at the 5-hour mark has had at least three "huh, didn't expect that" moments and is curious about what's next.</p>
+</div>
+
+<div class="phase">
+  <span class="label">Phase 6 — Polish</span>
+  <h3>Tighten the first five minutes</h3>
+  <p>
+    Even more critical than the first hour. The player decides whether to keep
+    the game open within the first 5 minutes of opening it.
+  </p>
+  <ul>
+    <li>Compress the first level-up. The first XP bar should fill fast enough to feel rewarding</li>
+    <li>Add micro-progression: visible per-task progress bars, "first cut" / "first kill" achievements, milestone toasts</li>
+    <li>Make the first 5 minutes feel like things are constantly happening — coins appearing, levels ticking up, new items rolling in</li>
+    <li>Audit the very first quest to ensure it lands within minute 2 max</li>
+  </ul>
+  <p><strong>Success criteria:</strong> a brand new player at minute 5 has leveled up at least twice, seen a roll above regrettable, and feels the loop clicking.</p>
+</div>
+
+<h2>What we won't do</h2>
+
+<ul>
+  <li><strong>No microtransactions or paywalls.</strong> The genre's loudest complaint. Premium one-time pricing on Steam is the right model.</li>
+  <li><strong>No piling on systems at once.</strong> Each new mechanic should land alone, with space to breathe, ideally tied to a prestige unlock so it feels earned.</li>
+  <li><strong>No late-game requiring active management.</strong> NGU's mixed reception comes from this — half the audience bounces when an "idle" game demands a check-in every 20 minutes.</li>
+  <li><strong>No prestige resets without preview.</strong> Always show the player exactly what they're getting before they commit.</li>
+</ul>
+
+<h2>How we'll work through this</h2>
+
+<ol>
+  <li>Phase by phase, in order. Don't start phase N+1 until phase N is in the build and tested.</li>
+  <li>At the start of each phase: spec it out together. Decide specifics. Write it. Test it.</li>
+  <li>Each phase produces a real version bump that's playable end-to-end.</li>
+  <li>Revisit this doc at the start of each phase — adjust if reality contradicts the plan.</li>
+</ol>
+
+<div class="meta">
+  Document created at the start of v0.79. Project at <code>D:\IDLER DEV\splinterwood</code>.
+  Companion docs: <code>story.md</code>, <code>stats-rules.md</code>, <code>CONTENT.md</code>.
+</div>
+
+</body>
+</html>
