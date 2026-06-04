@@ -5,9 +5,9 @@
 //
 // ActiveBuffsPanel lives in this file because it's only consumed here. If
 // other UI needs it later, promote to a top-level panel file.
-import React from 'react';
-import type { GameState, SkillId } from '../../types';
+import type { GameState } from '../../types';
 import { ITEMS } from '../../data/items';
+import { getVisibleSkills } from '../../data/skillInfo';
 import { ABILITIES } from '../../systems/abilities';
 import { computePlayerStats } from '../../systems/playerStats';
 import { totalAtk, totalDef, xpForLevel, cumulativeXpToLevel } from '../../systems/engine';
@@ -30,13 +30,7 @@ export function AdventurerPanel({ state }: { state: GameState }) {
         <div className="stat-row"><span>Speed</span><span>{formatStat('speed', stats.speed ?? 0)}</span></div>
       </div>
       <h3>Skills</h3>
-      {(() => {
-        const all: SkillId[] = ['woodcutting', 'carving', 'combat'];
-        if (state.questFlags.visited_greystone) {
-          all.push('mining', 'smithing');
-        }
-        return all;
-      })().map((id) => {
+      {getVisibleSkills(state).map((id) => {
         const sk = state.skills[id];
         const need = xpForLevel(sk.level);
         const xpInLvl = Math.floor(Math.max(0, bToNumber(bSub(sk.xp, cumulativeXpToLevel(sk.level)))));

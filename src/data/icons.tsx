@@ -213,6 +213,153 @@ export const ITEM_ICONS: Record<string, (size?: number) => JSX.Element> = {
     </HandDrawn>
   ),
 
+  // Alchemy tonics
+  tonic_swiftroot: (size = 64) => (
+    <HandDrawn seed={311} size={size}>
+      {/* Round-bottomed flask */}
+      <rect x="45" y="14" width="10" height="14" />
+      <path d="M45 28 L45 44 Q30 56 30 70 Q30 86 50 86 Q70 86 70 70 Q70 56 55 44 L55 28 Z" />
+      <path d="M34 66 Q50 60 66 66 Q66 78 50 80 Q34 78 34 66 Z" strokeWidth="1" />
+      {/* Sprout / root motif */}
+      <path d="M50 44 Q50 36 46 32 M50 40 Q56 36 58 32" strokeWidth="0.8" />
+      <circle cx="44" cy="72" r="1.2" />
+      <circle cx="56" cy="70" r="1" />
+    </HandDrawn>
+  ),
+  tonic_ember: (size = 64) => (
+    <HandDrawn seed={312} size={size}>
+      <rect x="44" y="12" width="12" height="12" />
+      <path d="M40 24 Q42 30 44 32 L40 76 Q40 88 50 88 Q60 88 60 76 L56 32 Q58 30 60 24 Z" />
+      {/* Flame inside */}
+      <path d="M50 44 Q46 52 50 58 Q54 52 52 46 Q56 50 54 58 Q58 54 56 48" strokeWidth="0.9" />
+      <path d="M42 64 Q50 60 58 64 Q58 74 50 76 Q42 74 42 64 Z" strokeWidth="1" />
+      <ellipse cx="50" cy="18" rx="6" ry="2" strokeWidth="0.8" />
+    </HandDrawn>
+  ),
+  tonic_veil: (size = 64) => (
+    <HandDrawn seed={313} size={size} scale={1.4}>
+      <rect x="42" y="10" width="16" height="12" strokeWidth="1.5" />
+      <path d="M34 22 Q36 28 42 32 L38 78 Q38 90 50 90 Q62 90 62 78 L58 32 Q64 28 66 22 Z" strokeWidth="1.5" />
+      {/* Swirling veil contents */}
+      <path d="M40 46 Q50 40 60 46 Q56 54 50 50 Q44 54 40 46 Z" strokeWidth="1" />
+      <path d="M40 60 Q50 54 60 60 Q56 68 50 64 Q44 68 40 60 Z" strokeWidth="0.9" />
+      <circle cx="46" cy="40" r="1.2" />
+      <circle cx="55" cy="38" r="1" />
+      {/* Faint question-mark wisp */}
+      <path d="M48 70 Q52 68 52 72 Q52 74 50 75" strokeWidth="0.6" />
+    </HandDrawn>
+  ),
+
+  // --- Alchemy reagents (rare gathering drops) ---
+  reagent_twig_burl: (size = 64) => (
+    <HandDrawn seed={321} size={size}>
+      <path d="M24 70 Q40 60 52 46 Q60 36 74 28" strokeWidth="2" />
+      <path d="M44 50 Q52 42 60 48 Q60 58 50 58 Q42 56 44 50 Z" />
+      <path d="M30 64 L26 72 M58 38 L64 34" strokeWidth="0.8" />
+    </HandDrawn>
+  ),
+  reagent_oak_bulb: (size = 64) => (
+    <HandDrawn seed={322} size={size}>
+      <path d="M50 24 L50 36" strokeWidth="1.5" />
+      <path d="M50 36 Q30 40 32 60 Q34 80 50 80 Q66 80 68 60 Q70 40 50 36 Z" />
+      <path d="M42 54 Q50 50 58 54" strokeWidth="0.8" />
+      <circle cx="46" cy="60" r="1" /><circle cx="56" cy="62" r="1" />
+    </HandDrawn>
+  ),
+  reagent_pinecone: (size = 64) => (
+    <HandDrawn seed={323} size={size}>
+      <path d="M50 22 Q40 30 40 50 Q40 72 50 82 Q60 72 60 50 Q60 30 50 22 Z" />
+      <path d="M44 36 Q50 40 56 36 M42 48 Q50 53 58 48 M44 60 Q50 64 56 60" strokeWidth="0.8" />
+      <path d="M50 30 L50 78" strokeWidth="0.6" />
+    </HandDrawn>
+  ),
+  reagent_ironbud: (size = 64) => (
+    <HandDrawn seed={324} size={size}>
+      <path d="M50 20 Q38 40 40 60 Q42 78 50 82 Q58 78 60 60 Q62 40 50 20 Z" strokeWidth="2" />
+      <path d="M50 30 L50 76" strokeWidth="1" />
+      <path d="M44 50 L56 50" strokeWidth="0.8" />
+    </HandDrawn>
+  ),
+  reagent_sand_pearl: (size = 64) => (
+    <HandDrawn seed={325} size={size}>
+      <circle cx="50" cy="52" r="24" />
+      <path d="M40 44 Q46 38 54 42" strokeWidth="1" />
+      <circle cx="42" cy="46" r="1.5" />
+    </HandDrawn>
+  ),
+  reagent_grey_geode: (size = 64) => (
+    <HandDrawn seed={326} size={size}>
+      <path d="M28 50 Q24 32 44 28 Q66 24 74 44 Q80 64 60 74 Q36 80 28 50 Z" />
+      <path d="M44 44 L52 38 L60 44 L56 56 L48 56 Z" strokeWidth="1" />
+      <path d="M52 38 L52 56 M44 44 L60 44" strokeWidth="0.6" />
+    </HandDrawn>
+  ),
+  reagent_blue_gem: (size = 64) => (
+    <HandDrawn seed={327} size={size}>
+      <path d="M50 22 L72 44 L50 82 L28 44 Z" strokeWidth="1.5" />
+      <path d="M28 44 L72 44 M50 22 L50 82 M38 44 L50 60 L62 44" strokeWidth="0.7" />
+    </HandDrawn>
+  ),
+  reagent_veinheart: (size = 64) => (
+    <HandDrawn seed={328} size={size}>
+      <path d="M50 78 Q26 58 26 42 Q26 28 38 28 Q48 28 50 40 Q52 28 62 28 Q74 28 74 42 Q74 58 50 78 Z" />
+      <path d="M50 40 L44 56 L54 58 L48 70" strokeWidth="0.9" />
+    </HandDrawn>
+  ),
+
+  // --- Enchanting reagents (rare enemy drops) ---
+  reagent_goblin_eye: (size = 64) => (
+    <HandDrawn seed={331} size={size}>
+      <path d="M22 50 Q50 28 78 50 Q50 72 22 50 Z" />
+      <circle cx="50" cy="50" r="11" />
+      <circle cx="50" cy="50" r="4" />
+      <path d="M30 40 Q26 36 24 38 M70 40 Q74 36 76 38" strokeWidth="0.7" />
+    </HandDrawn>
+  ),
+  reagent_boar_tusk: (size = 64) => (
+    <HandDrawn seed={332} size={size}>
+      <path d="M64 24 Q40 30 32 56 Q30 72 42 74 Q46 60 52 48 Q60 32 70 30 Q68 26 64 24 Z" />
+      <circle cx="30" cy="34" r="1.2" /><circle cx="24" cy="44" r="1" /><circle cx="34" cy="26" r="1" />
+      <circle cx="22" cy="36" r="0.9" />
+    </HandDrawn>
+  ),
+  reagent_bandit_knuckle: (size = 64) => (
+    <HandDrawn seed={333} size={size}>
+      <path d="M34 30 Q26 30 26 38 Q26 46 34 44 L62 56 Q70 58 70 50 Q70 42 62 44 Z" />
+      <path d="M30 28 Q24 24 22 30 Q24 36 30 34 M30 40 Q24 44 26 50 Q32 50 32 44" strokeWidth="0.8" />
+      <path d="M66 54 Q72 50 74 56 Q72 62 66 60 M66 46 Q72 42 74 48" strokeWidth="0.8" />
+    </HandDrawn>
+  ),
+  reagent_brigand_brand: (size = 64) => (
+    <HandDrawn seed={334} size={size}>
+      <path d="M28 28 L70 30 L72 70 L30 72 Z" />
+      <path d="M34 34 L34 66 M66 34 L66 66" strokeWidth="0.5" />
+      <path d="M44 44 Q50 38 56 44 Q56 52 50 52 Q44 52 44 60" strokeWidth="1.4" />
+      <circle cx="50" cy="50" r="1.2" />
+    </HandDrawn>
+  ),
+  reagent_taxman_seal: (size = 64) => (
+    <HandDrawn seed={335} size={size}>
+      <path d="M30 48 Q26 30 46 28 Q68 26 72 46 Q74 64 54 70 Q34 74 30 48 Z" />
+      <path d="M44 42 L56 42 L52 50 L58 58 L42 58 L48 50 Z" strokeWidth="0.9" />
+      <path d="M40 64 Q38 72 44 70" strokeWidth="0.7" />
+    </HandDrawn>
+  ),
+  reagent_troll_toe: (size = 64) => (
+    <HandDrawn seed={336} size={size}>
+      <path d="M38 30 Q30 34 32 54 Q34 76 52 76 Q70 74 68 54 Q66 38 56 30 Q48 26 38 30 Z" />
+      <path d="M42 34 Q40 30 46 28 Q52 30 50 36" strokeWidth="0.9" />
+      <path d="M40 66 Q50 70 60 66" strokeWidth="0.7" />
+    </HandDrawn>
+  ),
+  reagent_golem_core: (size = 64) => (
+    <HandDrawn seed={337} size={size}>
+      <path d="M32 36 L50 26 L68 36 L68 60 L50 72 L32 60 Z" strokeWidth="1.5" />
+      <path d="M50 26 L50 72 M32 36 L50 48 L68 36" strokeWidth="0.6" />
+      <path d="M44 50 L56 50 M50 44 L50 60" strokeWidth="1.2" />
+    </HandDrawn>
+  ),
+
   // Loot
   meat_scrap: (size = 64) => (
     <HandDrawn seed={401} size={size}>
@@ -327,6 +474,51 @@ export const ITEM_ICONS: Record<string, (size?: number) => JSX.Element> = {
       <line x1="46" y1="80" x2="54" y2="80" strokeWidth="0.6" />
       <line x1="46" y1="84" x2="54" y2="84" strokeWidth="0.6" />
       <circle cx="50" cy="94" r="4" />
+    </HandDrawn>
+  ),
+  // --- Floor 3 cloud-gear ---
+  item_cloudhelm: (size = 64) => (
+    <HandDrawn seed={905} size={size}>
+      {/* Domed helm with brow ridge and plume */}
+      <path d="M24 58 Q24 24 50 22 Q76 24 76 58 Z" />
+      <line x1="24" y1="58" x2="76" y2="58" strokeWidth="0.8" />
+      <path d="M38 58 Q38 44 50 44 Q62 44 62 58" strokeWidth="0.7" />
+      <line x1="50" y1="22" x2="50" y2="12" strokeWidth="0.8" />
+      <path d="M50 12 Q58 10 60 16" strokeWidth="0.6" />
+    </HandDrawn>
+  ),
+  item_skycuirass: (size = 64) => (
+    <HandDrawn seed={906} size={size}>
+      {/* Breastplate */}
+      <path d="M30 22 Q50 30 70 22 L74 60 Q50 74 26 60 Z" />
+      <line x1="50" y1="30" x2="50" y2="70" strokeWidth="0.7" />
+      <path d="M34 30 Q40 44 36 58" strokeWidth="0.5" />
+      <path d="M66 30 Q60 44 64 58" strokeWidth="0.5" />
+      <line x1="30" y1="22" x2="24" y2="28" strokeWidth="0.8" />
+      <line x1="70" y1="22" x2="76" y2="28" strokeWidth="0.8" />
+    </HandDrawn>
+  ),
+  item_wovengloves: (size = 64) => (
+    <HandDrawn seed={907} size={size}>
+      {/* Gauntlet/glove */}
+      <path d="M36 40 L36 78 Q36 86 50 86 Q64 86 64 78 L64 44" />
+      <line x1="40" y1="40" x2="40" y2="24" strokeWidth="2" />
+      <line x1="48" y1="40" x2="48" y2="20" strokeWidth="2" />
+      <line x1="56" y1="42" x2="56" y2="24" strokeWidth="2" />
+      <path d="M64 50 Q72 48 70 58" strokeWidth="2" />
+      <line x1="38" y1="60" x2="62" y2="60" strokeWidth="0.4" />
+      <line x1="38" y1="68" x2="62" y2="68" strokeWidth="0.4" />
+    </HandDrawn>
+  ),
+  item_driftcharm: (size = 64) => (
+    <HandDrawn seed={908} size={size}>
+      {/* Pendant on a cord */}
+      <path d="M30 18 Q50 30 70 18" strokeWidth="0.8" />
+      <line x1="50" y1="26" x2="50" y2="38" strokeWidth="0.8" />
+      {/* charm: a knot of driftwood */}
+      <path d="M50 38 Q34 48 42 64 Q50 80 58 64 Q66 48 50 38 Z" />
+      <path d="M44 52 Q50 58 56 52" strokeWidth="0.5" />
+      <circle cx="50" cy="60" r="3" strokeWidth="0.6" />
     </HandDrawn>
   ),
 };
@@ -543,4 +735,67 @@ export const FOE_ICONS: Record<string, (size?: number) => JSX.Element> = {
       <path d="M30 50 L34 84 L66 84 L70 50 Z" />
       {/* bowed stone head */}
       <rect x="38" y="30" width="24" height="22" />
-      {/* sad eyes + frown 
+      {/* sad eyes + frown */}
+      <path d="M43 39 Q46 42 49 39" />
+      <path d="M53 39 Q56 42 59 39" />
+      <path d="M44 44 Q50 50 56 44" />
+      {/* cracks */}
+      <path d="M50 52 L47 66 L51 74" strokeWidth="0.8" />
+      <path d="M40 60 L35 67" strokeWidth="0.8" />
+      {/* slumped heavy arms */}
+      <path d="M30 52 L21 70 L28 74" strokeWidth="2" />
+      <path d="M70 52 L79 70 L72 74" strokeWidth="2" />
+    </HandDrawn>
+  ),
+};
+
+// ============================================================
+// LOOKUP HELPERS
+// ============================================================
+
+export function getItemIcon(itemId: string, size?: number): JSX.Element | null {
+  const fn = ITEM_ICONS[itemId];
+  return fn ? fn(size) : null;
+}
+
+export function getTreeIcon(nodeId: string, size?: number): JSX.Element | null {
+  const fn = WOODCUTTING_ICONS[nodeId];
+  return fn ? fn(size) : null;
+}
+
+export function getMineIcon(nodeId: string, size?: number): JSX.Element | null {
+  const fn = MINING_ICONS[nodeId];
+  return fn ? fn(size) : null;
+}
+
+// Foes with hand-drawn PNG art live in /public/foes/<id>.png and override
+// any inline SVG definition. To swap a foe's art, drop a new PNG with the
+// same id into public/foes/ — no code change needed.
+const FOE_PNG_IDS = new Set(['goblin', 'boar', 'bandit', 'troll', 'brigand', 'taxman', 'golem']);
+
+export function getFoeIcon(foeId: string, size?: number): JSX.Element | null {
+  if (FOE_PNG_IDS.has(foeId)) {
+    const px = size ?? 64;
+    return (
+      <img
+        src={`/foes/${foeId}.png`}
+        alt=""
+        width={px}
+        height={px}
+        style={{ width: px, height: px, objectFit: 'contain', imageRendering: 'auto' }}
+      />
+    );
+  }
+  const fn = FOE_ICONS[foeId];
+  return fn ? fn(size) : null;
+}
+
+// Generic placeholder when an icon hasn't been authored yet
+export function GenericIcon({ size = 64 }: { size?: number }) {
+  return (
+    <HandDrawn seed={999} size={size}>
+      <rect x="20" y="20" width="60" height="60" strokeDasharray="4 3" />
+      <text x="50" y="58" textAnchor="middle" fontFamily="Special Elite, monospace" fontSize="20" fill="#5a3f24" stroke="none">?</text>
+    </HandDrawn>
+  );
+}

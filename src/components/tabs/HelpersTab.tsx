@@ -8,7 +8,6 @@
 // A "starving" hired craft helper (one missing materials) gets a visible
 // warning so the player knows why their carving/smithing helper isn't
 // progressing.
-import React from 'react';
 import type { GameState } from '../../types';
 import { HELPERS } from '../../data/helpers';
 import { hireHelper, getTaskDef } from '../../systems/engine';
@@ -58,7 +57,7 @@ export function HelpersTab({ state, onAction }: { state: GameState; onAction: ()
                 state.skills[h.requiredSkill].level >= h.requiredLevel;
               const canHire = !hired && bGte(state.coin, h.hireCost) && meetsLevel;
               let starving = false;
-              if (hired && (h.kind === 'cv' || h.kind === 'sm')) {
+              if (hired && (h.kind === 'cv' || h.kind === 'sm' || h.kind === 'al')) {
                 const def = getTaskDef(h.kind, h.taskId);
                 if (def && (def as any).cost) {
                   for (const k in (def as any).cost) {

@@ -9,7 +9,6 @@
 //
 // Adding a new category: ensure CATEGORY_ORDER and CATEGORY_LABELS in
 // items.ts know about it. No changes needed here.
-import React from 'react';
 import type { GameState, ItemCategory } from '../../types';
 import { ITEMS, CATEGORY_ORDER, CATEGORY_LABELS } from '../../data/items';
 import { sellCategory } from '../../systems/engine';
@@ -37,7 +36,9 @@ export function SatchelCategorized({ state, onAction }: { state: GameState; onAc
         const items = Object.keys(state.inv)
           .filter(id => state.inv[id] > 0 && ITEMS[id]?.category === cat)
           .sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
-        const collapsed = !!state.satchelCollapsed[cat];
+        // Reagents default to collapsed — there are many and the player hoards
+        // them for a long time before using them, so keep the satchel tidy.
+        const collapsed = state.satchelCollapsed[cat] ?? (cat === 'reagent');
         const totalCount = items.reduce((acc, id) => acc + state.inv[id], 0);
         const totalValue = items.reduce((acc, id) => acc + state.inv[id] * ITEMS[id].sell, 0);
         const sellable = cat !== 'quest';

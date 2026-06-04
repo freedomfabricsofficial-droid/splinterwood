@@ -17,9 +17,11 @@
 import type { GameState, ItemInstance, StatBlock, StatKey, EquipSlot } from '../types';
 import { ITEMS } from '../data/items';
 import { QUALITY_MULT, getModifier } from '../data/modifiers';
+import { enchantMultiplier } from '../data/enchanting';
 import { perkEffect } from './perks';
 import { investmentEffect } from '../data/investments';
 import { expenseEffect } from '../data/expenses';
+import { synergyForStat } from '../data/synergies';
 import { bAdd } from '../util/bignum';
 
 export const BASE_STATS: StatBlock = {
@@ -87,6 +89,16 @@ export function instanceStats(inst: ItemInstance): StatBlock {
         const base = block[sk] ?? 0;
         block[sk] = base + base * raw;
       }
+    }
+  }
+
+  // Tempering (Enchanting): each enchant level scales the item's core combat
+  // stats. This is the uncapped layer that keeps early gear relevant forever.
+  const lvl = inst.enchantLevel ?? 0;
+  if (lvl > 0) {
+    const mult = enchantMultiplier(lvl);
+    for (const sk of ['atk', 'def', 'hp'] as const) {
+      if (block[sk]) block[sk] = block[sk]! * mult;
     }
   }
 
@@ -253,6 +265,23 @@ export function computePlayerStats(state: GameState): StatBlock {
     out.coin_find = (out.coin_find ?? 0) + expFind;
     out.drop_rate = (out.drop_rate ?? 0) + expFind;
   }
+
+  // ---------------------------------------------------------------
+  // Trade Secrets (cross-skill synergies). Each skill's level feeds a
+  // bonus elsewhere; see data/synergies.ts. 'pct' synergies add into the
+  // matching percentage stat; 'pool' synergies multiply the aggregated
+  // atk/def/hp pools (like the Investment multipliers above). The Alchemy
+  // → XP synergy is handled in engine.giveXp, not here.
+  // ---------------------------------------------------------------
+  out.coin_find = (out.coin_find ?? 0) + synergyForStat(state, 'coin_find'); // Woodcutting: Seasoned Eye
+  out.drop_rate = (out.drop_rate ?? 0) + synergyForStat(state, 'drop_rate'); // Combat: Battle Instinct
+  out.crit_dmg  = (out.crit_dmg  ?? 0) + synergyForStat(state, 'crit_dmg');  // Enchanting: Resonance
+  const synAtk = synergyForStat(state, 'atk'); // Carving: Honed Edges
+  const synDef = synergyForStat(state, 'def'); // Smithing: Tempered Plate
+  const synHp  = synergyForStat(state, 'hp');  // Mining: Strong Back
+  if (synAtk > 0) out.atk = (out.atk ?? 0) * (1 + synAtk);
+  if (synDef > 0) out.def = (out.def ?? 0) * (1 + synDef);
+  if (synHp  > 0) out.hp  = (out.hp  ?? 0) * (1 + synHp);
 
   // Crit overflow: any crit chance past 100% converts 1:1 into crit damage.
   // Example: 1.20 crit → 1.00 crit + 0.20 added to crit_dmg.
@@ -491,4 +520,58 @@ export function sellFromStack(
   if (!tierStack || tierStack.count <= 0) return { sold: 0, total: 0 };
   const requested = count ?? tierStack.count;
   const toSell = Math.min(requested, tierStack.count);
-  const unitPrice = getStackUnitSellPr
+  const unitPrice = getStackUnitSellPrice(baseId, tier);
+  // Drain plain mod first (key ''), then others in order
+  let remaining = toSell;
+  const modOrder = ['', ...Object.keys(tierStack.mods).filter(k => k !== '').sort()];
+  for (const k of modOrder) {
+    if (remaining <= 0) break;
+    const avail = tierStack.mods[k] ?? 0;
+    if (avail <= 0) continue;
+    const take = Math.min(remaining, avail);
+    tierStack.mods[k] = avail - take;
+    if (tierStack.mods[k] <= 0) delete tierStack.mods[k];
+    remaining -= take;
+  }
+  tierStack.count -= toSell;
+  if (tierStack.count <= 0) delete state.equipStacks[baseId][tier];
+  const total = toSell * unitPrice;
+  state.coin = bAdd(state.coin, total);
+  return { sold: toSell, total };
+}
+
+// Bulk-sell: skip equipped, skip user-locked, skip "Unreasonable" tier.
+// Also sells stacked items below Unreasonable. Returns combined result.
+export function sellAllUnprotectedEquipment(state: GameState): { count: number; total: number } {
+  let count = 0;
+  let instanceTotal = 0;
+  // 1. Sell unprotected tracked instances. These don't auto-credit coin,
+  // so accumulate and credit at the end.
+  const instMap = state.equipInstances ?? {};
+  for (const baseId of Object.keys(instMap)) {
+    const insts = instMap[baseId];
+    const survivors: ItemInstance[] = [];
+    for (const inst of insts) {
+      if (isInstanceEquipped(state, inst.instId)) { survivors.push(inst); continue; }
+      if (inst.locked) { survivors.push(inst); continue; }
+      if (inst.tier === 'unreasonable') { survivors.push(inst); continue; }
+      instanceTotal += getInstanceSellPrice(inst);
+      count++;
+    }
+    instMap[baseId] = survivors;
+  }
+  state.coin = bAdd(state.coin, instanceTotal);
+  // 2. Sell all stack entries below Unreasonable. sellFromStack already
+  // credits state.coin, so we just accumulate the report numbers.
+  let stackTotal = 0;
+  const stackMap = state.equipStacks ?? {};
+  for (const baseId of Object.keys(stackMap)) {
+    for (const tier of Object.keys(stackMap[baseId]) as QualityTier[]) {
+      if (tier === 'unreasonable') continue;
+      const result = sellFromStack(state, baseId, tier);
+      stackTotal += result.total;
+      count += result.sold;
+    }
+  }
+  return { count, total: instanceTotal + stackTotal };
+}

@@ -2,7 +2,7 @@
 // Each ability is a button with an icon, name, and cooldown indicator.
 // Disabled until level requirements are met; clicking a ready ability
 // invokes it via useAbility().
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { GameState } from '../../types';
 import { ABILITIES, canUseAbility, useAbility, cooldownRemaining } from '../../systems/abilities';
 import { showToast } from '../../systems/engine';

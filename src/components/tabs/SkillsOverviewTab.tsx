@@ -8,9 +8,9 @@
 // permanent buffs, and equipment contributions for a single skill's speed.
 // Provides the visibility the player needs to verify "yes, Sharper Axe is
 // doing something."
-import React from 'react';
 import type { GameState, SkillId } from '../../types';
 import { SKILL_INFO, getAllSkillsForDisplay } from '../../data/skillInfo';
+import { getSynergyRows } from '../../data/synergies';
 import { perkEffect } from '../../systems/perks';
 import { fmt } from '../../systems/format';
 import { xpForLevel, cumulativeXpToLevel } from '../../systems/engine';
@@ -23,6 +23,7 @@ export function SkillsOverviewTab({ state }: { state: GameState }) {
       <p style={{ fontStyle: 'italic', color: 'var(--ink-soft)', marginBottom: 10 }}>
         Every skill, every milestone. What you can do, and what's still to come.
       </p>
+      <TradeSecretsPanel state={state} />
       {skills.map(({ id, locked }) => {
         const info = SKILL_INFO[id];
         const sk = state.skills[id];
@@ -80,6 +81,70 @@ export function SkillsOverviewTab({ state }: { state: GameState }) {
   );
 }
 
+// Trade Secrets — the cross-skill synergy web. Shows every unlocked skill's
+// passive contribution to the rest of the character, with a plain-language
+// label and the player's current total for each (so every number explains
+// itself). Bonuses scale with the source skill's level and never cap out.
+function TradeSecretsPanel({ state }: { state: GameState }) {
+  const rows = getSynergyRows(state);
+  if (rows.length === 0) return null;
+  return (
+    <div
+      style={{
+        border: '1px solid var(--ink-soft)',
+        background: 'var(--paper-dark)',
+        borderRadius: 4,
+        padding: '12px 14px',
+        marginBottom: 14,
+      }}
+    >
+      <div style={{ fontWeight: 700, color: 'var(--ink)', letterSpacing: '0.04em' }}>
+        Trade Secrets
+      </div>
+      <div style={{ fontStyle: 'italic', color: 'var(--ink-soft)', fontSize: '0.86em', margin: '2px 0 10px' }}>
+        Every trade quietly teaches the others. Leveling any skill keeps paying off across the rest —
+        and these bonuses never stop growing.
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {rows.map(({ def, level, valueText }) => (
+          <div
+            key={def.source}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 10,
+              borderBottom: '1px dotted var(--paper-edge)',
+              paddingBottom: 6,
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div style={{ color: 'var(--ink)', fontWeight: 600 }}>
+                {def.name}
+                <span style={{ color: 'var(--ink-soft)', fontWeight: 400, fontSize: '0.85em', marginLeft: 6 }}>
+                  {SKILL_INFO[def.source].name} Lv {level}
+                </span>
+              </div>
+              <div style={{ color: 'var(--ink-soft)', fontSize: '0.85em' }}>{def.effectLabel}</div>
+            </div>
+            <div
+              style={{
+                color: 'var(--gold-bright)',
+                fontWeight: 700,
+                fontFamily: "'Special Elite', monospace",
+                whiteSpace: 'nowrap',
+              }}
+              title={`From ${SKILL_INFO[def.source].name}: ${def.flavor}`}
+            >
+              {valueText}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SkillSpeedSummary({ state, skillId }: { state: GameState; skillId: SkillId }) {
   // Map skill -> perk keys
   const perkKey: Partial<Record<SkillId, string>> = {
@@ -95,7 +160,7 @@ function SkillSpeedSummary({ state, skillId }: { state: GameState; skillId: Skil
   const perkBonus = perkEffect(state, key as any);
   const perm = state.permBonuses ?? {};
   const unifiedBuff = isGather ? (perm.gatherSpeed ?? 0) : (perm.craftSpeed ?? 0);
-  const legacyKey: Record<SkillId, 'wcSpeed' | 'cvSpeed' | 'mnSpeed' | 'smSpeed' | undefined> = {
+  const legacyKey: Partial<Record<SkillId, 'wcSpeed' | 'cvSpeed' | 'mnSpeed' | 'smSpeed' | undefined>> = {
     woodcutting: 'wcSpeed', carving: 'cvSpeed', mining: 'mnSpeed', smithing: 'smSpeed',
     combat: undefined,
   };

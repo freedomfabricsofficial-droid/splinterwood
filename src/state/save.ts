@@ -3,7 +3,7 @@ import { ITEMS } from '../data/items';
 import { Big, stringifyState, parseState } from '../util/bignum';
 
 const SAVE_KEY = 'splinterwood_save';
-const CURRENT_VERSION = 15;
+const CURRENT_VERSION = 16;
 
 export function freshState(): GameState {
   const now = Date.now();
@@ -19,6 +19,8 @@ export function freshState(): GameState {
       combat:      { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
       mining:      { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
       smithing:    { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
+      alchemy:     { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
+      enchanting:  { xp: Big(0), level: 1, perkPoints: 0, owned: {} },
     },
     equipped: { weapon: null, shield: null },
     equipInstances: {},
@@ -321,6 +323,13 @@ function migrate(raw: any): GameState {
     console.log('[splinterwood] Migration v14→v15: added Expenses (coin sink).');
   }
 
+  // v15 -> v16: Floor 3 skills — Alchemy + Enchanting.
+  if ((s.version ?? 0) < 16) {
+    if (!s.skills.alchemy)    s.skills.alchemy    = { xp: Big(0), level: 1, perkPoints: 0, owned: {} };
+    if (!s.skills.enchanting) s.skills.enchanting = { xp: Big(0), level: 1, perkPoints: 0, owned: {} };
+    console.log('[splinterwood] Migration v15→v16: added Alchemy + Enchanting skills.');
+  }
+
   s.version = CURRENT_VERSION;
   return s;
 }
@@ -365,4 +374,30 @@ export function saveGame(state: GameState): void {
   }
 }
 
-// Expose a manual export for emergency rescue when auto-
+// Expose a manual export for emergency rescue when auto-save is failing.
+if (typeof window !== 'undefined') {
+  (window as any).exportSave = function exportSaveFromGlobal() {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) {
+      console.warn('No save in localStorage to export.');
+      return null;
+    }
+    console.log('Save string (copy this, paste into Import Save later):\n', btoa(raw));
+    return btoa(raw);
+  };
+}
+
+export function wipeSave(): void {
+  // Mark the wipe so the beforeunload save handler skips writing back to localStorage
+  // before the page actually reloads.
+  (window as any).__splinterwood_wiped = true;
+  localStorage.removeItem(SAVE_KEY);
+}
+
+export function exportSave(state: GameState): string {
+  return btoa(stringifyState(state));
+}
+
+export function importSave(encoded: string): GameState {
+  return migrate(parseState(atob(encoded)));
+}

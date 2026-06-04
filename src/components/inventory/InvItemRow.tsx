@@ -2,7 +2,7 @@
 //
 // Displays item name (with equipped/locked markers), count, and the action
 // buttons (Use/Lock/Sell). Hovering opens a floating tooltip.
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { GameState } from '../../types';
 import { ITEMS } from '../../data/items';

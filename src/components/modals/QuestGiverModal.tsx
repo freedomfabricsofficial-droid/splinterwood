@@ -1,7 +1,6 @@
 // Quest dialog modal. Shows the active step in the NPC's quest chain plus
 // prior completed steps. Per-NPC class controls voice font on quest text
 // (Maggie's Indie Flower handwriting, Brock's Special Elite typewriter, etc.)
-import React from "react";
 import type { GameState } from '../../types';
 import { QUEST_STEPS } from '../../data/quests';
 import { activeStepForGiver } from '../../systems/engine';

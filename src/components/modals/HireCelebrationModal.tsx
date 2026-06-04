@@ -1,6 +1,5 @@
 // Shown once when a helper is hired. Confetti has already burst from the
 // game loop; the modal frames the moment with the helper's intro line.
-import React from "react";
 import { HELPERS } from '../../data/helpers';
 
 export function HireCelebrationModal({ helperId, onClose }: { helperId: string; onClose: () => void }) {

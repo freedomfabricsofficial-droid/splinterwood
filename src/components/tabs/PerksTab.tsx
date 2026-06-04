@@ -10,7 +10,7 @@
 //
 // Buying a perk drains from the appropriate point pool — see buyCategoryPerk
 // in engine.ts. Locked perks are revealed (per design: full transparency).
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { GameState, SkillId } from '../../types';
 import { CATEGORY_TREES } from '../../data/perks';
 import type { Branch, CategoryPerk } from '../../data/perks';

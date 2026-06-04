@@ -8,7 +8,7 @@ import { QUEST_STEPS } from '../data/quests';
 import { ITEMS } from '../data/items';
 import { playSfx, getAudioSettings, setAudioSettings } from '../systems/audio';
 import { RANDOM_EVENTS, devFireEvent } from '../data/events';
-import { Big, bAdd } from '../util/bignum';
+import { bAdd } from '../util/bignum';
 import { cumulativeXpToLevelBig } from '../systems/leveling';
 import { FLOORS, setCurrentFloor } from '../data/floors';
 import type { FloorId } from '../data/floors';

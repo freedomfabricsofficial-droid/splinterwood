@@ -1,6 +1,5 @@
 // Shown after the player dies in combat. Death stops combat, applies coin
 // penalty, and surfaces this modal with a Restaurant-of-Sad-Lessons summary.
-import React from "react";
 export function DeathModal({ event, onDismiss }: {
   event: { coinLost: number; foeName: string; line: string };
   onDismiss: () => void;

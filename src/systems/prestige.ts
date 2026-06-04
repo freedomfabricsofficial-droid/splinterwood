@@ -15,7 +15,7 @@ import { getFloor } from '../data/floors';
 import { cumulativeXpToLevelBig } from './leveling';
 import { INVESTMENTS_BY_ID, investmentLevel, investmentCost } from '../data/investments';
 
-const SKILL_IDS: SkillId[] = ['woodcutting', 'carving', 'combat', 'mining', 'smithing'];
+const SKILL_IDS: SkillId[] = ['woodcutting', 'carving', 'combat', 'mining', 'smithing', 'alchemy', 'enchanting'];
 
 // Whether the prestige system is available at all (drives the tab's locked state).
 // Becomes permanently available the first time the player reaches Greystone Reach —
@@ -104,7 +104,8 @@ export function cookTheBooks(state: GameState): { reward: number; line: string }
   // questlines can be played again but the player keeps map access and story state.
   const keepFlag = (k: string) =>
     k.startsWith('maggie_') ||
-    k === 'visited_greystone' || k === 'greystone_unlocked' || k === 'died_once' ||
+    k === 'visited_greystone' || k === 'greystone_unlocked' ||
+    k === 'visited_floor3' || k === 'floor3_unlocked' || k === 'died_once' ||
     k === 'prestige_unlocked';
   const oldFlags = state.questFlags ?? {};
   const newFlags: Record<string, boolean> = {};
@@ -118,4 +119,15 @@ export function cookTheBooks(state: GameState): { reward: number; line: string }
   }
   const headLevel = investmentLevel(state, 'head_start');
   if (headLevel > 0) {
-    const startL
+    const startLevel = 1 + INVESTMENTS_BY_ID['head_start'].perLevel * headLevel;
+    for (const sk of SKILL_IDS) {
+      state.skills[sk].level = startLevel;
+      state.skills[sk].xp = cumulativeXpToLevelBig(startLevel);
+      state.skills[sk].perkPoints = Math.floor(startLevel / 5); // perk points they'd have earned
+    }
+  }
+
+  const line = `You cook the books. The ledger balances to zero — clean as fresh snow. ` +
+    `Maggie says it's healthy to start over now and then. (Volume ${(state.loopCount ?? 0) + 1}.)`;
+  return { reward, line };
+}

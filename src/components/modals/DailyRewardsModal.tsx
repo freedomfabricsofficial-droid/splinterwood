@@ -1,7 +1,6 @@
 // Horizontal-scrolling 30-day track. Player sees what each day offers,
 // today's day is highlighted, past days are checked. Click "Claim" to take
 // today's reward.
-import React from "react";
 import type { GameState } from '../../types';
 import { DAILY_REWARD_TRACK, nextStreakDay } from '../../data/dailyRewards';
 import { shouldOfferLetter } from '../../data/letter';

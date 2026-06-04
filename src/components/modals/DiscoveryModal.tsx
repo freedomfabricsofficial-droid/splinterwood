@@ -10,7 +10,6 @@
 //   2. Add a branch below that resolves refId → display fields
 //   3. The engine pushes onto state.pendingDiscoveries — no other UI wiring needed.
 
-import React from "react";
 import { PAGES_BY_ID } from '../../data/pages';
 import type { PendingDiscovery } from '../../types';
 import { PageBlockRenderer } from '../shared/PageBlockRenderer';

@@ -5,6 +5,7 @@ export { HireCelebrationModal } from './HireCelebrationModal';
 export { DeathModal } from './DeathModal';
 export { EventModal } from './EventModal';
 export { QuestGiverModal } from './QuestGiverModal';
+export { QuestLogModal } from './QuestLogModal';
 export { LetterModal } from './LetterModal';
 export { StoryLetterModal } from './StoryLetterModal';
 export { DailyRewardsModal } from './DailyRewardsModal';

@@ -55,13 +55,14 @@ export const FLOORS: FloorDef[] = [
   {
     id: 'floor_3',
     number: 3,
-    name: '???',
-    npc: null,
-    flavor: 'The map shows a smudge. Water, perhaps. A boat.',
-    unlockHint: 'Conquer Greystone Reach first.',
+    name: 'The Cloud Islands',
+    npc: 'Laileb the Wizard',
+    flavor: 'Islands adrift in white. The air tastes of copper and something sweeter underneath.',
+    unlockHint: 'Reach Mining 30 or Smithing 30, and the way up may open.',
     theme: 'wet',
-    isUnlocked: () => false,
-    skillsTaught: [],
+    // Opens once the player has gone deep enough in Greystone's skills.
+    isUnlocked: (s) => s.skills.mining.level >= 30 || s.skills.smithing.level >= 30 || !!s.questFlags.visited_floor3,
+    skillsTaught: ['alchemy', 'enchanting'],
   },
   {
     id: 'floor_4',
@@ -97,6 +98,7 @@ export function getCurrentFloor(state: GameState): FloorDef {
 
 export function unlockFloor(state: GameState, id: FloorId): void {
   if (id === 'greystone_reach') state.questFlags.greystone_unlocked = true;
+  if (id === 'floor_3') state.questFlags.floor3_unlocked = true;
   // (Future floors will set their own flags.)
 }
 

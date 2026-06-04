@@ -1,10 +1,11 @@
 // Core type definitions for the game.
 
-export type SkillId = 'woodcutting' | 'carving' | 'combat' | 'mining' | 'smithing';
-export type TaskKind = 'wc' | 'cv' | 'cb' | 'mn' | 'sm';
+export type SkillId = 'woodcutting' | 'carving' | 'combat' | 'mining' | 'smithing' | 'alchemy' | 'enchanting';
+export type TaskKind = 'wc' | 'cv' | 'cb' | 'mn' | 'sm' | 'al';
 
 export type ItemCategory =
   | 'material'      // raw gathering resources
+  | 'reagent'       // rare crafting reagents (feed Alchemy/Enchanting)
   | 'equipment'     // weapons, shields, armor
   | 'consumable'    // potions, food, scrolls
   | 'loot'          // monster drops meant for selling
@@ -165,6 +166,12 @@ export interface ItemInstance {
   modifier: string | null; // modifier id from modifiers data, or null for "none"
   instId: string;          // unique per-instance id
   locked?: boolean;        // user-locked from sell-all
+  // Enchanting "Temper" level. Each level adds a flat % to this item's core
+  // combat stats (atk/def/hp) — an uncapped scaling layer so even a Floor-1
+  // carved sword can become an endgame weapon. Defaults to 0 / undefined.
+  // Tempered items are auto-locked so they're never folded back into a stack
+  // (which would lose the enchant). See systems/enchanting.ts.
+  enchantLevel?: number;
 }
 
 // Stack-by-tier compression for non-favorite items. Each base item id maps to
@@ -294,4 +301,18 @@ export interface GameState {
   // Slush is the carryover currency earned by cooking the books. Decimal so it
   // can compound across many loops without precision loss — always go through
   // bignum helpers (bAdd/bSub/bGte/...), never raw operators.
-  slush?: import('break_eternity.j
+  slush?: import('break_eternity.js').default;
+  slushLifetime?: import('break_eternity.js').default; // total Slush ever earned
+  loopCount?: number;                          // times the books have been cooked
+  investmentsOwned?: Record<string, number>;   // investment id -> level owned
+
+  // Expenses — a within-run coin sink (resets every loop, like skills/helpers).
+  expensesOwned?: Record<string, number>;      // expense id -> level owned this run
+}
+
+// Lore discovery — for the blocking discovery modal. Today only 'page' exists.
+// Future: 'curio', 'note', 'sigil', whatever new lore-item types we add.
+export interface PendingDiscovery {
+  kind: 'page' | 'curio' | 'note';
+  refId: string;  // id of the page / curio / etc — looked up in its data file
+}

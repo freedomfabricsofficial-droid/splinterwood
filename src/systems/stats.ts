@@ -100,4 +100,35 @@ export function autoEquip(state: GameState, baseId: string): void {
   const newScore = score(instanceStats(tmpInst));
 
   let curScore = -Infinity;
-  if (currentId
+  if (currentId) {
+    const cur = findInstanceById(state, currentId);
+    if (cur) curScore = score(instanceStats(cur));
+  }
+
+  if (newScore > curScore) {
+    // Upgrade: allocate an instance and equip it. The previously-equipped
+    // item (if any and unlocked) demotes back into the stack.
+    const inst = addItemInstance(state, baseId, tier, modifier);
+    if (currentId) {
+      const old = findInstanceById(state, currentId);
+      if (old && !old.locked) {
+        addEquipDrop(state, old.id, old.tier, old.modifier);
+        // Drop the old instance entry now that its data is in the stack
+        const map = state.equipInstances ?? {};
+        for (const bid of Object.keys(map)) {
+          const i = map[bid].findIndex(x => x.instId === currentId);
+          if (i >= 0) { map[bid].splice(i, 1); break; }
+        }
+        state.equippedInst[slot] = null;
+      }
+    }
+    equipInstance(state, inst.instId);
+  } else {
+    // Not better. Fold into the stack — no allocation.
+    addEquipDrop(state, baseId, tier as QualityTier, modifier);
+  }
+
+  // Legacy compat: keep the old pointers in sync so any unmigrated UI still works.
+  if (slot === 'weapon')  state.equipped.weapon  = baseId;
+  if (slot === 'offhand') state.equipped.shield  = baseId;
+}

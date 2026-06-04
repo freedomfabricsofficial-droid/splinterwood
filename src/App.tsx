@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 // createPortal — used inside inventory components, not directly here
 import './styles/game.css';
-import { WOODCUTTING_NODES } from './data/woodcutting';
-import { CARVING_RECIPES } from './data/carving';
 // COMBAT_FOES/COMBAT_POOLS — used inside src/components/combat/, not directly here
 import { ITEMS } from './data/items';
 // CATEGORY_ORDER/CATEGORY_LABELS used inside SatchelCategorized
@@ -12,19 +10,16 @@ import { QUEST_STEPS, getQuestGivers } from './data/quests';
 import { HELPERS } from './data/helpers';
 // SHOP_ITEMS — used inside ShopTab, not directly here
 import { IDLE_STATUSES, activeStatusText } from './data/flavor';
-import { maybeFireEvent, consumeEvent, devFireEvent } from './data/events';
 import type { RandomEventDef } from './data/events';
 import { Big, bLt, bGt, bToNumber } from './util/bignum';
 import {
-  shouldOfferLetter, rollLetter, claimLetter, timeUntilNextLetterMs, updateLetterQueue,
-  MARGIN_DOODLES,
+  shouldOfferLetter, claimLetter, updateLetterQueue,
   // COUNTER_BUFFS/counterPurchaseCount/buyCounterBuff used inside InnkeepCounterTab
 } from './data/letter';
 import type { LetterContents } from './data/letter';
 import { checkJournalUnlocks } from './data/journal';
 // JournalSection/getJournalCounts/ACHIEVEMENTS/get*Entries used inside JournalPanel
 // JOURNAL_PAGES used inside JournalPanel
-import { DAILY_REWARD_TRACK, nextStreakDay } from './data/dailyRewards';
 import { STORY_LETTERS_BY_ID } from './data/storyLetters';
 import type { StoryLetter } from './data/storyLetters';
 import {
@@ -32,32 +27,26 @@ import {
   // wipeSave/exportSave/importSave used inside LedgerPanel
 } from './state/save';
 import {
-  startTask, stopTask, tickTask, checkQuest, claimDailyReward, addCoin, setCombatTabActive,
+  tickTask, checkQuest, claimDailyReward, addCoin, setCombatTabActive,
   // sellItem/sellCategory used inside InvItemRow/SatchelCategorized
   applyOfflineProgress, getLogs, consumeToast,
   // toggleItemLock used inside InvItemRow
   // payTroll unused
-  showToast, log, canAfford,
+  log,
   // hireHelper used inside HelpersTab
   // buyFromShop/getShopStock used inside ShopTab, not directly here
-  maybeResetDailyShop, consumeDeath, getTaskDef, getTaskTime,
+  maybeResetDailyShop, consumeDeath, getTaskDef,
   pruneExpiredBuffs, activeStepForGiver, drainEvents,
   // consumeItem used inside InvItemRow
-  doSwing, canSwing, swingCooldownRemaining, SWING_COOLDOWN_MS,
   totalMaxHp,
   // totalAtk/totalDef used inside CharacterSheetTab/CombatTab/AdventurerPanel
   // xpForLevel/cumulativeXpToLevel used inside SkillsOverviewTab/AdventurerPanel
 } from './systems/engine';
 // perkEffect — used inside SkillsOverviewTab, not directly here
 import { fmt, formatTime } from './systems/format';
-import { getItemIcon, GenericIcon } from './data/icons';
-import { MINING_NODES } from './data/mining';
-import { SMITHING_RECIPES } from './data/smithing';
-import { FLOORS, getCurrentFloor, setCurrentFloor } from './data/floors';
-import type { FloorDef, FloorId } from './data/floors';
+import { getCurrentFloor, setCurrentFloor } from './data/floors';
 import { TASK_REGISTRY, validateTaskRegistry } from './data/tasks';
 // Avatar — used inside CharacterSheetTab and CombatTab, not directly here
-import { computePlayerStats } from './systems/playerStats';
 // instanceStats/equipInstance/unequipSlot/isInstanceEquipped/removeInstance/
 // getInstanceSellPrice used inside inventory components
 // fullItemName used inside inventory components
@@ -68,11 +57,11 @@ import { computePlayerStats } from './systems/playerStats';
 import {
   spawnSawdust, spawnSparks, spawnCoinBurst, spawnInkSplat, spawnLevelUp, spawnFloater, spawnConfetti,
 } from './systems/effects';
-import { playSfx, unlockAudio, setMusicTrack, getAudioSettings, setAudioSettings } from './systems/audio';
+import { playSfx, unlockAudio, setMusicTrack } from './systems/audio';
 import { ParticleLayer } from './ui/ParticleLayer';
 import { AnimatedNumber } from './ui/AnimatedNumber';
 import { DoodleOverlay } from './ui/DoodleOverlay';
-import type { GameState, SkillId, TaskKind, ReturnSummary } from './types';
+import type { GameState, TaskKind, ReturnSummary } from './types';
 // ItemCategory used inside inventory components
 import type { GameEvent } from './systems/engine';
 import { DEV_TOOLS_ENABLED } from './dev/config';
@@ -84,13 +73,12 @@ import {
   HireCelebrationModal,
   DeathModal,
   EventModal,
-  QuestGiverModal,
+  QuestLogModal,
   LetterModal,
   StoryLetterModal,
   DailyRewardsModal,
   RealmMapModal,
 } from './components/modals';
-import { HelperProgressBar, SwingButton, activeHelperFor } from './components/shared';
 // PageBlockRenderer used inside JournalPanel/DiscoveryModal/StoryLetterModal
 // formatStat used inside inventory/tabs components
 import { SatchelCategorized } from './components/inventory';
@@ -99,6 +87,8 @@ import {
   CarvingTab,
   MiningTab,
   SmithingTab,
+  AlchemyTab,
+  EnchantingTab,
   CharacterSheetTab,
   SkillsOverviewTab,
   EconomyLedgerTab,
@@ -113,6 +103,7 @@ import {
   LedgerPanel,
 } from './components/tabs';
 import { CombatTab } from './components/combat';
+import { GoalTracker } from './components/GoalTracker';
 
 const TICK_MS = 100;
 const SAVE_INTERVAL_MS = 15000;
@@ -129,6 +120,8 @@ const DISTRICTS: { id: District; label: string; icon: string; subtabs: { id: Sub
   { id: 'workshop', label: 'Workshop', icon: 'ti-tool',           subtabs: [
     { id: 'carving',  label: 'Carving' },
     { id: 'smithing', label: 'Smithing' },
+    { id: 'alchemy',  label: 'Alchemy' },
+    { id: 'enchanting', label: 'Enchanting' },
   ]},
   { id: 'fight',    label: 'Fight',    icon: 'ti-sword',          subtabs: [{ id: 'combat',      label: 'Combat' }] },
   { id: 'town',     label: 'Town',     icon: 'ti-building-store', subtabs: [
@@ -268,6 +261,7 @@ export default function App() {
         case 'mn': playSfx('mine'); break;
         case 'cv': playSfx('craft'); break;
         case 'sm': playSfx('smith'); break;
+        case 'al': playSfx('craft'); break;
         // combat already plays its own sounds on swing
       }
     } else if (ev.type === 'gather_complete') {
@@ -503,6 +497,8 @@ export default function App() {
         </button>
       </div>
 
+      <GoalTracker state={s} />
+
       <div className="layout">
         {/* LEFT RAIL: Districts */}
         <nav className="district-rail">
@@ -586,6 +582,8 @@ export default function App() {
               {subtab === 'mining'      && <MiningTab     state={s} onAction={forceRerender} />}
               {subtab === 'carving'     && <CarvingTab     state={s} onAction={forceRerender} />}
               {subtab === 'smithing'    && <SmithingTab    state={s} onAction={forceRerender} />}
+              {subtab === 'alchemy'     && <AlchemyTab     state={s} onAction={forceRerender} />}
+              {subtab === 'enchanting'  && <EnchantingTab  state={s} onAction={forceRerender} />}
               {subtab === 'combat'      && <CombatTab      state={s} onAction={forceRerender} />}
               {subtab === 'shop'        && <ShopTab        state={s} onAction={forceRerender} />}
               {subtab === 'counter'     && <InnkeepCounterTab state={s} onAction={forceRerender} />}
@@ -676,6 +674,8 @@ export default function App() {
           onTravel={(floorId) => {
             // Visiting Greystone for the first time claims Maggie's intro quest
             if (floorId === 'greystone_reach') s.questFlags.visited_greystone = true;
+            // Visiting the Cloud Islands for the first time unlocks Alchemy/Enchanting
+            if (floorId === 'floor_3') s.questFlags.visited_floor3 = true;
             setCurrentFloor(s, floorId);
             forceRerender();
             setMapOpen(false);
@@ -748,6 +748,7 @@ function RightRail({ state, onAction, returnSummary, onDismissSummary }: {
   onDismissSummary: () => void;
 }) {
   const [tab, setTab] = useState<RightTab>('adventurer');
+  const [questLogOpen, setQuestLogOpen] = useState(false);
   // If a return summary just arrived, jump to the log tab so the player sees it
   useEffect(() => {
     if (returnSummary) setTab('log');
@@ -755,6 +756,9 @@ function RightRail({ state, onAction, returnSummary, onDismissSummary }: {
 
   return (
     <aside className="right-rail">
+      {questLogOpen && (
+        <QuestLogModal state={state} onClose={() => setQuestLogOpen(false)} />
+      )}
       <div className="right-rail-tabs">
         {([
           ['adventurer', 'ti-user',         'Self'],
@@ -774,7 +778,7 @@ function RightRail({ state, onAction, returnSummary, onDismissSummary }: {
             <button
               key={id}
               className={`right-tab ${tab === id ? 'active' : ''}`}
-              onClick={() => setTab(id)}
+              onClick={() => (id === 'quest' ? setQuestLogOpen(true) : setTab(id))}
               aria-label={label}
             >
               <i className={`ti ${icon}`} aria-hidden="true"></i>
@@ -931,7 +935,6 @@ function QuestArea({ state }: { state: GameState }) {
     <>
       {visibleGivers.map((npc) => {
         const npcSteps = QUEST_STEPS.filter(q => q.npc === npc);
-        const visibleSteps = npcSteps.filter(q => q.visible(state));
         const claimedCount = npcSteps.filter(q => state.questClaimed[q.id]).length;
         const activeStep = activeStepForGiver(state, npc);
         const allDone = claimedCount === npcSteps.length;
@@ -950,9 +953,9 @@ function QuestArea({ state }: { state: GameState }) {
         );
       })}
       {openGiver && (
-        <QuestGiverModal
+        <QuestLogModal
           state={state}
-          npc={openGiver}
+          initialNpc={openGiver}
           onClose={() => setOpenGiver(null)}
         />
       )}
@@ -975,4 +978,21 @@ function LetterNode({ state, onOpen }: { state: GameState; onOpen: () => void })
     <button
       className="letter-node pulsing no-click-sfx"
       onClick={onOpen}
-      title="A letter has arrived. Click 
+      title="A letter has arrived. Click to open."
+    >
+      <i className="ti ti-mail" aria-hidden="true"></i>
+      <span className="letter-node-label">Letter</span>
+    </button>
+  );
+}
+
+/* InnkeepCounterTab moved to src/components/tabs/InnkeepCounterTab.tsx */
+
+/* ActiveBuffsPanel moved with AdventurerPanel — see
+   src/components/tabs/AdventurerPanel.tsx */
+
+/* InvItemRow and ItemTooltipFloater moved to src/components/inventory/ */
+
+/* ---------- Helper progress display ---------- */
+/* SwingButton, HelperProgressBar, activeHelperFor extracted to
+   src/components/shared/ — see barrel. */

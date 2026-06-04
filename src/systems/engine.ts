@@ -3,8 +3,10 @@ import { CARVING_RECIPES } from '../data/carving';
 import { COMBAT_FOES, pickFoeFromPool } from '../data/combat';
 import { MINING_NODES } from '../data/mining';
 import { SMITHING_RECIPES } from '../data/smithing';
+import { ALCHEMY_RECIPES } from '../data/alchemy';
+import { GATHER_REAGENT, FOE_REAGENT, REAGENT_GATHER_CHANCE, REAGENT_FOE_CHANCE } from '../data/reagents';
 import { ITEMS } from '../data/items';
-import { PERK_TREES, ALL_PERKS, CATEGORY_TREES } from '../data/perks';
+import { ALL_PERKS, CATEGORY_TREES } from '../data/perks';
 import { QUEST_STEPS } from '../data/quests';
 import { HELPERS } from '../data/helpers';
 import { SHOP_ITEMS } from '../data/shop';
@@ -13,14 +15,15 @@ import type { GameState, SkillId, TaskKind, CombatFoe, ReturnSummary, ActiveTask
 import { perkEffect, perkFlag } from './perks';
 import { investmentEffect } from '../data/investments';
 import { expenseEffect } from '../data/expenses';
+import { synergyBonus } from '../data/synergies';
 import { totalAtk, totalDef, totalMaxHp, autoEquip } from './stats';
 import { computePlayerStats } from './playerStats';
-import { xpForLevel, cumulativeXpToLevel, levelFromTotalXp, levelFromTotalXpBig } from './leveling';
+import { xpForLevel, cumulativeXpToLevel, levelFromTotalXpBig } from './leveling';
 import { playSfx } from './audio';
 import { rollPageDrop, PAGES_BY_ID } from '../data/pages';
 import { getCurrentFloor } from '../data/floors';
 import { getDayReward, nextStreakDay } from '../data/dailyRewards';
-import { Big, bAdd, bSub, bMul, bGte, bLte, bGt, bLt, bMax, bMin, bFloor, bToNumber, bPow } from '../util/bignum';
+import { Big, bAdd, bSub, bMul, bGte, bLte, bLt, bMax, bMin, bFloor, bToNumber, bPow } from '../util/bignum';
 
 // Throttled coin sound — call this from action sites where the player
 // actively gains/spends coin (sells, kills, letters, events, buys).
@@ -72,6 +75,36 @@ function tryDropPage(state: GameState, kind: 'wc' | 'mn' | 'cv' | 'sm' | 'cb'): 
     state.pendingDiscoveries.push({ kind: 'page', refId: pageId });
     const page = PAGES_BY_ID[pageId];
     log(`Found a page: ${page.title}.`, 'gold');
+  }
+}
+
+// ---------- Rare reagent drops (feed Alchemy + Enchanting) ----------
+// These ride the existing rare-drop perks (gather_rare / drop_rate for
+// gathering; combat_drop_bonus / drop_rate for foes), and announce themselves
+// as a gold "rare find" so the player notices the mystery item even though
+// they can't use it until Floor 3.
+function tryDropGatherReagent(state: GameState, nodeId: string): void {
+  const reagentId = GATHER_REAGENT[nodeId];
+  if (!reagentId) return;
+  const stats = computePlayerStats(state);
+  const chance = REAGENT_GATHER_CHANCE + perkEffect(state, 'gather_rare') + (stats.drop_rate ?? 0);
+  if (Math.random() < chance) {
+    addItem(state, reagentId, 1);
+    if (_summary) _summary.rareEvents.push(`Found a rare ${ITEMS[reagentId].name}`);
+    else {
+      log(`A rare ${ITEMS[reagentId].name}! You pocket it, unsure why.`, 'gold');
+    }
+  }
+}
+function tryDropFoeReagent(state: GameState, foeId: string, dropMult: number): void {
+  const reagentId = FOE_REAGENT[foeId];
+  if (!reagentId) return;
+  if (Math.random() < REAGENT_FOE_CHANCE * dropMult) {
+    addItem(state, reagentId, 1);
+    if (_summary) _summary.rareEvents.push(`Found a rare ${ITEMS[reagentId].name}`);
+    else {
+      log(`A rare ${ITEMS[reagentId].name}! It looks important. Somehow.`, 'gold');
+    }
   }
 }
 
@@ -163,6 +196,7 @@ export function getTaskDef(kind: TaskKind, id: string) {
   if (kind === 'cb') return COMBAT_FOES.find(t => t.id === id);
   if (kind === 'mn') return MINING_NODES.find(t => t.id === id);
   if (kind === 'sm') return SMITHING_RECIPES.find(t => t.id === id);
+  if (kind === 'al') return ALCHEMY_RECIPES.find(t => t.id === id);
 }
 export function skillIdForKind(kind: TaskKind): SkillId {
   if (kind === 'wc') return 'woodcutting';
@@ -170,6 +204,7 @@ export function skillIdForKind(kind: TaskKind): SkillId {
   if (kind === 'cb') return 'combat';
   if (kind === 'mn') return 'mining';
   if (kind === 'sm') return 'smithing';
+  if (kind === 'al') return 'alchemy';
   return 'combat';
 }
 export function getTaskTime(state: GameState, kind: TaskKind, def: any): number {
@@ -182,6 +217,7 @@ export function getTaskTime(state: GameState, kind: TaskKind, def: any): number 
   if (kind === 'mn') return def.time / (1 + gather);
   if (kind === 'cv') return def.time / (1 + craft);
   if (kind === 'sm') return def.time / (1 + craft);
+  if (kind === 'al') return def.time / (1 + craft);
   return def.time || 1;
 }
 export function canAfford(state: GameState, cost: Record<string, number>): boolean {
@@ -197,6 +233,9 @@ export function addItem(state: GameState, id: string, n: number): void {
   // satchel's equipment section reads from equipInstances instead.
   if (def?.equip?.slot) {
     for (let i = 0; i < n; i++) autoEquip(state, id);
+    // Equipment never enters state.inv, so record a persistent "owned this" flag
+    // here — quests and the Collector achievement rely on it to detect crafted gear.
+    state.questFlags['had_' + id] = true;
     if (_summary) _summary.itemsGained[id] = (_summary.itemsGained[id] ?? 0) + n;
     if (!_summary) pushEvent({ type: 'item_touched', itemId: id });
     return;
@@ -250,6 +289,8 @@ export function giveXp(state: GameState, skillId: SkillId, amount: number | impo
     combat: 'cb_xp',
     mining: 'mn_xp',
     smithing: 'sm_xp',
+    alchemy: 'al_xp',
+    enchanting: 'en_xp',
   };
   const xpKey = xpKeyMap[skillId];
   let mult = 1 + perkEffect(state, xpKey);
@@ -264,6 +305,8 @@ export function giveXp(state: GameState, skillId: SkillId, amount: number | impo
   mult += investmentEffect(state, 'inv_xp');
   // Expenses: Night Shifts (within-run XP boost).
   mult += expenseEffect(state, 'exp_xp');
+  // Trade Secrets: Alchemy's "In the Blood" boosts XP across every skill.
+  mult += synergyBonus(state, 'alchemy');
   const s = state.skills[skillId];
   // Compose all multipliers in Decimal so high-level multiplier doesn't overflow
   const levelMult = bPow(1.02, s.level);
@@ -296,7 +339,7 @@ export function startTask(state: GameState, kind: TaskKind, id: string): void {
     showToast(`Requires level ${def.level}.`);
     return;
   }
-  if (kind === 'cv' && !canAfford(state, (def as any).cost)) {
+  if ((kind === 'cv' || kind === 'al') && !canAfford(state, (def as any).cost)) {
     showToast('Not enough materials.');
     return;
   }
@@ -378,7 +421,7 @@ export function doSwing(state: GameState, slot: 'task' | 'combatTask' = 'task'):
   if (!canSwing(state, slot)) return false;
   state.lastSwingAt = Date.now();
 
-  if (t.kind === 'wc' || t.kind === 'cv' || t.kind === 'mn' || t.kind === 'sm') {
+  if (t.kind === 'wc' || t.kind === 'cv' || t.kind === 'mn' || t.kind === 'sm' || t.kind === 'al') {
     // Advance progress by 30% of total time (capped so it doesn't lap)
     const bonus = t.totalTime * 0.30;
     t.progress = Math.min(t.totalTime, t.progress + bonus);
@@ -408,6 +451,8 @@ export function doSwing(state: GameState, slot: 'task' | 'combatTask' = 'task'):
           }
         }
       }
+      // Rare Enchanting reagent drop (mysterious until Floor 3)
+      tryDropFoeReagent(state, def.id, dropMult);
       // Second Breath
       const healPct = perkEffect(state, 'heal_per_kill');
       if (healPct > 0) {
@@ -451,7 +496,7 @@ export function tickTask(state: GameState, dt: number): void {
     if (!def) {
       state.task = null;
       if (!state.combatTask) state.idleSince = Date.now();
-    } else if (t.kind === 'wc' || t.kind === 'cv' || t.kind === 'mn' || t.kind === 'sm') {
+    } else if (t.kind === 'wc' || t.kind === 'cv' || t.kind === 'mn' || t.kind === 'sm' || t.kind === 'al') {
       t.progress += dt;
       while (t.progress >= t.totalTime) {
         t.progress -= t.totalTime;
@@ -508,6 +553,8 @@ function completeGather(state: GameState, kind: TaskKind, def: any): void {
         else log(`A rare ${ITEMS[upgrade.yield].name} fell from the canopy!`, 'gold');
       }
     }
+    // Rare Alchemy reagent drop (mysterious until Floor 3)
+    tryDropGatherReagent(state, def.id);
     // The Whisperwood: 1% chance to drop 50c on gather
     const coinDrop = perkEffect(state, 'gather_coin_drop_chance');
     if (coinDrop > 0 && Math.random() < coinDrop) {
@@ -557,6 +604,8 @@ function completeGather(state: GameState, kind: TaskKind, def: any): void {
         if (!_summary) log(`A rare ${ITEMS[upgrade.yield].name} chips loose!`, 'gold');
       }
     }
+    // Rare Alchemy reagent drop (mysterious until Floor 3)
+    tryDropGatherReagent(state, def.id);
     // The Whisperwood: 1% chance to drop 50c on gather (applies to mining too)
     const coinDrop = perkEffect(state, 'gather_coin_drop_chance');
     if (coinDrop > 0 && Math.random() < coinDrop) {
@@ -584,6 +633,24 @@ function completeGather(state: GameState, kind: TaskKind, def: any): void {
     if (!_summary) {
       log(`Forged a ${ITEMS[def.produces].name}.`, 'green');
       pushEvent({ type: 'craft_complete', taskId: def.id, itemId: def.produces, kind: 'sm' });
+    }
+  } else if (kind === 'al') {
+    if (!canAfford(state, def.cost)) {
+      if (!_summary) showToast('Out of materials.');
+      state.task = null;
+      state.idleSince = Date.now();
+      return;
+    }
+    if (Math.random() >= perkEffect(state, 'craft_save')) {
+      for (const k in def.cost) state.inv[k] -= def.cost[k];
+    }
+    let amount = 1;
+    if (Math.random() < perkEffect(state, 'craft_double')) amount++;
+    addItem(state, def.produces, amount);
+    giveXp(state, 'alchemy', def.xp);
+    if (!_summary) {
+      log(`Brewed a ${ITEMS[def.produces].name}.`, 'green');
+      pushEvent({ type: 'craft_complete', taskId: def.id, itemId: def.produces, kind: 'al' });
     }
   }
 }
@@ -628,6 +695,8 @@ function combatRound(state: GameState, foe: CombatFoe): void {
         }
       }
     }
+    // Rare Enchanting reagent drop (mysterious until Floor 3)
+    tryDropFoeReagent(state, foe.id, dropMult);
     // Second Breath: heal % max HP per kill
     const healPct = perkEffect(state, 'heal_per_kill');
     if (healPct > 0) {
@@ -716,7 +785,7 @@ function helperSpeedMult(state: GameState, kind: TaskKind, baseSpeedMult: number
     mult *= 1 + perkEffect(state, 'gather_helper_speed');
   }
   // Crafting Tempo capstone: craft helpers +25% speed
-  if (kind === 'cv' || kind === 'sm') {
+  if (kind === 'cv' || kind === 'sm' || kind === 'al') {
     mult *= 1 + perkEffect(state, 'craft_helper_speed');
   }
   // The Guild capstone: +15% to everything helpers do
@@ -740,7 +809,7 @@ function tickHelpers(state: GameState, dt: number): void {
     const def = getTaskDef(helper.kind, helper.taskId);
     if (!def) continue;
     // Allow all gather/craft kinds (wc, cv, mn, sm). Combat helpers aren't a thing yet.
-    if (helper.kind !== 'wc' && helper.kind !== 'cv' && helper.kind !== 'mn' && helper.kind !== 'sm') continue;
+    if (helper.kind !== 'wc' && helper.kind !== 'cv' && helper.kind !== 'mn' && helper.kind !== 'sm' && helper.kind !== 'al') continue;
     const baseTime = getTaskTime(state, helper.kind, def);
     const effectiveSpeed = helperSpeedMult(state, helper.kind, helper.speedMultiplier);
     const helperTime = baseTime / effectiveSpeed;
@@ -772,6 +841,7 @@ function runHelperCompletion(state: GameState, kind: TaskKind, speedMult: number
         if (_summary) _summary.rareEvents.push(`Found a rare ${ITEMS[upgrade.yield].name}`);
       }
     }
+    tryDropGatherReagent(state, def.id);
     giveXp(state, 'woodcutting', def.xp * speedMult);
     tryDropPage(state, 'wc');
   } else if (kind === 'cv') {
@@ -794,6 +864,7 @@ function runHelperCompletion(state: GameState, kind: TaskKind, speedMult: number
       const upgrade = MINING_NODES[idx + 1];
       if (upgrade) addItem(state, upgrade.yield, 1);
     }
+    tryDropGatherReagent(state, def.id);
     giveXp(state, 'mining', def.xp * speedMult);
     tryDropPage(state, 'mn');
   } else if (kind === 'sm') {
@@ -806,6 +877,15 @@ function runHelperCompletion(state: GameState, kind: TaskKind, speedMult: number
     addItem(state, def.produces, amount);
     giveXp(state, 'smithing', def.xp * speedMult);
     tryDropPage(state, 'sm');
+  } else if (kind === 'al') {
+    if (!canAfford(state, def.cost)) return;
+    if (Math.random() >= perkEffect(state, 'craft_save')) {
+      for (const k in def.cost) state.inv[k] -= def.cost[k];
+    }
+    let amount = 1;
+    if (helperYieldChance > 0 && Math.random() < helperYieldChance) amount++;
+    addItem(state, def.produces, amount);
+    giveXp(state, 'alchemy', def.xp * speedMult);
   }
 }
 
@@ -1214,4 +1294,23 @@ export function applyOfflineProgress(state: GameState, seconds: number): ReturnS
   }
 
   // Adaptive step size — for long offline periods (NGU-style uncapped) we
-  // can't simulate at 1-second resolution o
+  // can't simulate at 1-second resolution or the load thread freezes for
+  // minutes. Use larger steps for longer offline times. Math in tickTask
+  // is dt-correct so coarser steps yield equivalent totals.
+  let step = 1.0;
+  if (seconds > 6 * 3600)   step = 5;     // > 6h:   5s steps
+  if (seconds > 24 * 3600)  step = 30;    // > 1d:   30s steps
+  if (seconds > 7 * 24 * 3600) step = 120; // > 1w: 2-min steps
+
+  let remaining = seconds;
+  while (remaining > 0) {
+    const dt = Math.min(step, remaining);
+    tickTask(state, dt);
+    remaining -= dt;
+  }
+
+  return endSummary();
+}
+
+// re-exports
+export { totalAtk, totalDef, totalMaxHp, xpForLevel, cumulativeXpToLevel };

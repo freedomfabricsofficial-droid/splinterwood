@@ -7,7 +7,7 @@
 //   - 'combatTask' → combat swings (the only slot that has a real cooldown)
 //
 // Per-skill swing sound plays on each successful press.
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { GameState } from '../../types';
 import { canSwing, swingCooldownRemaining, doSwing, SWING_COOLDOWN_MS } from '../../systems/engine';
 import { playSfx } from '../../systems/audio';
@@ -33,6 +33,7 @@ export function SwingButton({ state, label, onAction, slot = 'task' }: {
       else if (kind === 'mn') playSfx('mine');
       else if (kind === 'cv') playSfx('craft');
       else if (kind === 'sm') playSfx('smith');
+      else if (kind === 'al') playSfx('craft');
       // combat already plays 'hit' via the foe_hit event
       onAction();
     }

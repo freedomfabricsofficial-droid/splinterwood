@@ -6,7 +6,7 @@
 // Internal helpers EquippedInstanceDisplay and StatBlockDisplay are kept in
 // this file because they are only used here. If a future tab needs them,
 // promote to src/components/inventory/ instead.
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { GameState, EquipSlot, ItemInstance, StatKey, StatBlock } from '../../types';
 import { ITEMS } from '../../data/items';
@@ -102,7 +102,12 @@ function EquippedInstanceDisplay({ inst, onUnequip }: { inst: ItemInstance; onUn
     >
       <div className="equip-instance-icon">{getItemIcon(inst.id, 40) ?? <GenericIcon size={40} />}</div>
       <div className="equip-instance-info">
-        <div className={`equip-instance-name tier-${inst.tier}`}>{full}</div>
+        <div className={`equip-instance-name tier-${inst.tier}`}>
+          {full}
+          {(inst.enchantLevel ?? 0) > 0 && (
+            <span className="enchant-badge" title={`Tempered +${inst.enchantLevel}`}> +{inst.enchantLevel}</span>
+          )}
+        </div>
         <div className="equip-instance-stats">
           {Object.entries(stats).map(([k, v]) => (
             <span key={k} className={`equip-stat ${(v as number) >= 0 ? 'pos' : 'neg'}`}>

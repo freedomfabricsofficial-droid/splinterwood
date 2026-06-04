@@ -12,7 +12,7 @@
 //   - Locked label when level requirement not met
 import React from 'react';
 import type { GameState, TaskKind } from '../../types';
-import { tasksForKind } from '../../data/tasks';
+import { visibleTasksForKind } from '../../data/tasks';
 import { TaskCard } from './TaskCard';
 
 interface TaskTabRendererProps {
@@ -24,7 +24,7 @@ interface TaskTabRendererProps {
 }
 
 export function TaskTabRenderer({ state, onAction, kind, intro, iconForTask }: TaskTabRendererProps) {
-  const tasks = tasksForKind(kind);
+  const tasks = visibleTasksForKind(state, kind);
   return (
     <>
       <p style={{ fontStyle: 'italic', color: 'var(--ink-soft)', marginBottom: 10 }}>

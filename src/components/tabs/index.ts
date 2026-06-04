@@ -6,6 +6,8 @@ export { WoodcuttingTab } from './WoodcuttingTab';
 export { CarvingTab } from './CarvingTab';
 export { MiningTab } from './MiningTab';
 export { SmithingTab } from './SmithingTab';
+export { AlchemyTab } from './AlchemyTab';
+export { EnchantingTab } from './EnchantingTab';
 export { CharacterSheetTab } from './CharacterSheetTab';
 export { SkillsOverviewTab } from './SkillsOverviewTab';
 export { EconomyLedgerTab } from './EconomyLedgerTab';
@@ -16,4 +18,5 @@ export { PerksTab } from './PerksTab';
 export { InnkeepCounterTab } from './InnkeepCounterTab';
 export { ExpensesTab } from './ExpensesTab';
 export { PrestigeTab } from './PrestigeTab';
-ex
+export { JournalPanel } from './JournalPanel';
+export { LedgerPanel } from './LedgerPanel';

@@ -9,7 +9,7 @@
 // short durations and high magnitudes.
 
 import type { GameState } from '../types';
-import { Big, bAdd, bMul, bFloor, bGte, bLt } from '../util/bignum';
+import { bMul, bFloor, bGte } from '../util/bignum';
 
 export interface AbilityDef {
   id: string;

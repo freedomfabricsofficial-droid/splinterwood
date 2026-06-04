@@ -331,4 +331,6 @@ export const PERK_TREES: Record<SkillId, Perk[]> = {
   combat:      [],
   mining:      [],
   smithing:    [],
+  alchemy:     [],
+  enchanting:  [],
 };

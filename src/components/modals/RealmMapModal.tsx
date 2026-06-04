@@ -1,7 +1,6 @@
 // Folding map of the realm. Each floor renders as a card; locked floors show
 // unlock hints, unlocked floors offer travel. Clicking the active floor is a
 // no-op (you're already there).
-import React from "react";
 import type { GameState } from '../../types';
 import { FLOORS, getCurrentFloor } from '../../data/floors';
 import type { FloorId } from '../../data/floors';

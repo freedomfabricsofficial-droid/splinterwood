@@ -8,7 +8,7 @@
 // Combat is its own task slot (state.combatTask), parallel to gather/craft.
 // Foes are drawn from pools — when the active foe dies, the next one is
 // randomly selected from the same pool.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { GameState } from '../../types';
 import { COMBAT_FOES, COMBAT_POOLS } from '../../data/combat';
 import { computePlayerStats } from '../../systems/playerStats';
@@ -173,4 +173,13 @@ export function CombatTab({ state, onAction }: { state: GameState; onAction: () 
             <div className="combat-pane-empty">
               <i className="ti ti-skull" aria-hidden="true"></i>
               <div>Nothing here.</div>
-            
+            </div>
+          )}
+        </FramedPanel>
+      </div>
+
+      {/* ABILITIES BAR */}
+      <AbilitiesBar state={state} onAction={onAction} />
+    </>
+  );
+}

@@ -1,7 +1,6 @@
 // ItemTooltipFloater — hover popup for non-equipment satchel items.
 // Lighter-weight than EquipmentInstanceTooltip (no per-instance tier/modifier
 // math). Positioned via fixed coordinates supplied by the caller.
-import React from 'react';
 import { ITEMS } from '../../data/items';
 import { getItemIcon, GenericIcon } from '../../data/icons';
 

@@ -32,9 +32,14 @@ export const IDLE_STATUSES: string[] = [
 ];
 
 // Active status template: "chopping a Crooked Twig", "in heroic combat with a Hungover Goblin"
-export function activeStatusText(kind: 'wc' | 'cv' | 'cb', taskName: string): string {
+// Covers every task kind so gathering/crafting tasks (mining, smithing, alchemy)
+// don't fall through to the combat line.
+export function activeStatusText(kind: 'wc' | 'cv' | 'cb' | 'mn' | 'sm' | 'al', taskName: string): string {
   if (kind === 'wc') return `chopping a ${taskName}`;
   if (kind === 'cv') return `whittling a ${taskName}`;
+  if (kind === 'mn') return `mining a ${taskName}`;
+  if (kind === 'sm') return `forging a ${taskName}`;
+  if (kind === 'al') return `brewing a ${taskName}`;
   return `locked in heroic combat with a ${taskName}`;
 }
 

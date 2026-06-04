@@ -23,6 +23,7 @@ import { WOODCUTTING_NODES } from './woodcutting';
 import { MINING_NODES } from './mining';
 import { CARVING_RECIPES } from './carving';
 import { SMITHING_RECIPES } from './smithing';
+import { ALCHEMY_RECIPES } from './alchemy';
 
 // What kind of "task tab" this task belongs to. Used to group tasks for display.
 export type TaskCategory = 'gather' | 'workshop';
@@ -44,6 +45,13 @@ export interface TaskRegistryEntry {
   // Helper expectation: by default every task should have a helper.
   // Set `noHelper: true` only for tasks intentionally excluded from automation.
   noHelper?: boolean;
+
+  // Optional quest/floor gate. If set, the task is hidden from its tab until
+  // state.questFlags[requiresFlag] is truthy. Used to keep Floor 3 cloud-gear
+  // recipes out of the Carving/Smithing tabs until the player has visited the
+  // Cloud Islands (the tabs themselves are always visible, so per-task gating
+  // is needed — unlike Alchemy, whose whole skill/tab is hidden).
+  requiresFlag?: string;
 }
 
 // The full task registry. Adding a task here is what makes it appear in the game.
@@ -69,12 +77,23 @@ export const TASK_REGISTRY: TaskRegistryEntry[] = [
   { kind: 'cv', taskId: 'shield',   skill: 'carving', category: 'workshop', district: 'workshop', buttonLabel: 'Carve', swingLabel: 'Carve' },
   { kind: 'cv', taskId: 'sword',    skill: 'carving', category: 'workshop', district: 'workshop', buttonLabel: 'Carve', swingLabel: 'Carve' },
   { kind: 'cv', taskId: 'greatbow', skill: 'carving', category: 'workshop', district: 'workshop', buttonLabel: 'Carve', swingLabel: 'Carve' },
+  // Floor 3 cloud-gear (hidden until visited_floor3). noHelper for now — auto-craft helpers TBD.
+  { kind: 'cv', taskId: 'woven_gloves', skill: 'carving', category: 'workshop', district: 'workshop', buttonLabel: 'Weave', swingLabel: 'Weave', requiresFlag: 'visited_floor3', noHelper: true },
+  { kind: 'cv', taskId: 'drift_charm',  skill: 'carving', category: 'workshop', district: 'workshop', buttonLabel: 'Carve', swingLabel: 'Carve', requiresFlag: 'visited_floor3', noHelper: true },
 
   // --- Smithing (Greystone Reach) ---
   { kind: 'sm', taskId: 'iron_pick',        skill: 'smithing', category: 'workshop', district: 'workshop', buttonLabel: 'Forge', swingLabel: 'Strike' },
   { kind: 'sm', taskId: 'stone_buckler',    skill: 'smithing', category: 'workshop', district: 'workshop', buttonLabel: 'Forge', swingLabel: 'Strike' },
   { kind: 'sm', taskId: 'greystone_maul',   skill: 'smithing', category: 'workshop', district: 'workshop', buttonLabel: 'Forge', swingLabel: 'Strike' },
   { kind: 'sm', taskId: 'veinforged_blade', skill: 'smithing', category: 'workshop', district: 'workshop', buttonLabel: 'Forge', swingLabel: 'Strike' },
+  // Floor 3 cloud-gear (hidden until visited_floor3). noHelper for now — auto-craft helpers TBD.
+  { kind: 'sm', taskId: 'cloudiron_helm', skill: 'smithing', category: 'workshop', district: 'workshop', buttonLabel: 'Forge', swingLabel: 'Strike', requiresFlag: 'visited_floor3', noHelper: true },
+  { kind: 'sm', taskId: 'sky_cuirass',    skill: 'smithing', category: 'workshop', district: 'workshop', buttonLabel: 'Forge', swingLabel: 'Strike', requiresFlag: 'visited_floor3', noHelper: true },
+
+  // --- Alchemy (The Cloud Islands) ---
+  { kind: 'al', taskId: 'swiftroot',      skill: 'alchemy', category: 'workshop', district: 'workshop', buttonLabel: 'Brew', swingLabel: 'Stir' },
+  { kind: 'al', taskId: 'ember_tincture', skill: 'alchemy', category: 'workshop', district: 'workshop', buttonLabel: 'Brew', swingLabel: 'Stir' },
+  { kind: 'al', taskId: 'veil_extract',   skill: 'alchemy', category: 'workshop', district: 'workshop', buttonLabel: 'Brew', swingLabel: 'Stir' },
 ];
 
 // ---------- Lookups ----------
@@ -96,14 +115,16 @@ export function taskData(kind: TaskKind, taskId: string): any {
   if (kind === 'cv') return CARVING_RECIPES.find(t => t.id === taskId);
   if (kind === 'mn') return MINING_NODES.find(t => t.id === taskId);
   if (kind === 'sm') return SMITHING_RECIPES.find(t => t.id === taskId);
+  if (kind === 'al') return ALCHEMY_RECIPES.find(t => t.id === taskId);
   return undefined;
 }
 
 // Tasks that should be visible to the player given current game state.
 // Excludes tasks for skills the player hasn't unlocked yet.
 export function visibleTasksForKind(state: GameState, kind: TaskKind): TaskRegistryEntry[] {
-  return tasksForKind(kind);  // gating happens per-task at the level check;
-                              // skill availability gates the whole tab elsewhere
+  // Hide flag-gated tasks until earned (e.g. Floor 3 cloud-gear stays hidden
+  // until visited_floor3). Level gating still happens per-task in the card.
+  return tasksForKind(kind).filter(t => !t.requiresFlag || !!state.questFlags[t.requiresFlag]);
 }
 
 // ---------- Dev-mode integrity check ----------

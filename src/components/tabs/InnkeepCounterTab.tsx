@@ -4,7 +4,6 @@
 // rather than the buy button. Maggie's permanent bonuses now apply
 // multiplicatively to the rest of the stat stack (see stats-rules.md
 // Section 3 + the permBonuses pass in computePlayerStats).
-import React from 'react';
 import type { GameState } from '../../types';
 import { COUNTER_BUFFS, counterPurchaseCount, buyCounterBuff } from '../../data/letter';
 

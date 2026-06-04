@@ -1,7 +1,6 @@
 // Floating tooltip for an equipment instance.
 // Positioned via fixed coordinates supplied by the caller (typically via
 // createPortal so it can break out of clipping parents).
-import React from 'react';
 import type { ItemInstance, StatKey } from '../../types';
 import { ITEMS } from '../../data/items';
 import { instanceStats, getInstanceSellPrice } from '../../systems/playerStats';

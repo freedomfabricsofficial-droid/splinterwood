@@ -344,4 +344,10 @@ function formatBigLong(d: Decimal): string {
   if (magnitudeIdx < SHORT_SCALE.length) {
     const divisor = new Decimal(10).pow(magnitudeIdx * 3);
     const mantissa = d.div(divisor).toNumber();
-    return formatMantissa(man
+    return formatMantissa(mantissa) + ' ' + SHORT_SCALE[magnitudeIdx];
+  }
+  const lastIdx = SHORT_SCALE.length - 1;
+  const divisor = new Decimal(10).pow(lastIdx * 3);
+  const mantissa = d.div(divisor).toNumber();
+  return formatMantissa(mantissa) + ' ' + SHORT_SCALE[lastIdx];
+}

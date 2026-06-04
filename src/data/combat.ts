@@ -52,4 +52,27 @@ export const COMBAT_FOES: CombatFoe[] = [
   { id: 'bandit', name: 'Off-Duty Bandit',     level: 1,  hp: 8,    atk: 2,  xp: 8,    coin: 18,   drops: [{ id: 'meat_scrap', chance: 0.4 }], flavor: 'Insists this is a hobby, not a career.', poolId: 'splinterwood-t1' },
 
   // Tier 2 — The Troublemakers (Lv 10)
-  { id: 'brigand', name: 'Off-Season Brigand'
+  { id: 'brigand', name: 'Off-Season Brigand', level: 10, hp: 35,   atk: 5,  xp: 24,   coin: 48,   drops: [{ id: 'coin_purse', chance: 0.3 }], flavor: 'Robbing folk, but casually. It is the slow season.', poolId: 'splinterwood-t2' },
+
+  // Tier 3 — The Feral Quarter (Lv 20)
+  { id: 'taxman',  name: 'The Tax Collector',  level: 20, hp: 95,   atk: 11, xp: 60,   coin: 120,  drops: [{ id: 'coin_purse', chance: 0.4 }], flavor: 'Wants what is owed. Declines to say by whom.',       poolId: 'splinterwood-t3' },
+
+  // Tier 4 — The Crossing (Lv 32)
+  { id: 'troll',   name: 'Bridge Toll Troll',  level: 32, hp: 320,  atk: 22, xp: 380,  coin: 800,  drops: [{ id: 'troll_tooth', chance: 0.3 }], flavor: 'Will accept exact change only.',                    poolId: 'greystone-t1' },
+
+  // Tier 5 — Deep Greystone (Lv 48)
+  { id: 'golem',   name: 'Disappointed Golem', level: 48, hp: 1000, atk: 40, xp: 1400, coin: 2400, drops: [{ id: 'troll_tooth', chance: 0.35 }, { id: 'ore_greystone', chance: 0.5 }], flavor: 'It expected more from you. From everyone, really.', poolId: 'greystone-t2' },
+];
+
+// Helper: get all foes in a given pool
+export function foesInPool(poolId: string): CombatFoe[] {
+  return COMBAT_FOES.filter(f => f.poolId === poolId);
+}
+
+// Picks a random foe from a given pool. Returns null if pool is empty or
+// doesn't exist.
+export function pickFoeFromPool(poolId: string): CombatFoe | null {
+  const pool = foesInPool(poolId);
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}

@@ -8,7 +8,7 @@
 // Add a new section by extending sectionDefs and adding a branch in the
 // JSX that picks the matching body component. Adding a new help topic =
 // editing the topics array in HelpSectionBody.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { GameState } from '../../types';
 import { JOURNAL_PAGES } from '../../data/pages';
 import type { JournalSection } from '../../data/journal';

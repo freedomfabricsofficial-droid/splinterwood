@@ -3,7 +3,6 @@
 // Reads the player's coin, Daily Bread, streak, total satchel value,
 // equipment value, gear-derived modifiers, and Counter purchases.
 // Pure read-only view — no actions, no state mutations.
-import React from 'react';
 import type { GameState } from '../../types';
 import { ITEMS } from '../../data/items';
 import { computePlayerStats, getInstanceSellPrice } from '../../systems/playerStats';

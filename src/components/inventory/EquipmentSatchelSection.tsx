@@ -7,7 +7,7 @@
 //
 // "Sell all unprotected gear" excludes equipped, locked, and "Unreasonable"
 // (both instances and stacks).
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { GameState, ItemCategory, StatKey } from '../../types';
 import { ITEMS } from '../../data/items';
 import { sellAllUnprotectedEquipment } from '../../systems/playerStats';

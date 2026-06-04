@@ -3,7 +3,6 @@
 // Lists every entry in SHOP_ITEMS; each shows stock and cost. Daily-stock
 // items show remaining/max; unlimited items just show the cost.
 // Tab is read-only beyond the Buy button.
-import React from 'react';
 import type { GameState } from '../../types';
 import { SHOP_ITEMS } from '../../data/shop';
 import { ITEMS } from '../../data/items';

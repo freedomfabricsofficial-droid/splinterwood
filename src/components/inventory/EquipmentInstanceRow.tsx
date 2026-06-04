@@ -3,7 +3,7 @@
 // Each row shows full name (with tier/modifier), per-instance stat list,
 // and equip/unequip/lock/sell actions. Hovering opens the rich
 // EquipmentInstanceTooltip via portal.
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { GameState, EquipSlot, ItemInstance } from '../../types';
 import { ITEMS } from '../../data/items';
@@ -43,7 +43,11 @@ export function EquipmentInstanceRow({ state, inst, onAction }: {
       onMouseLeave={hide}
     >
       <div className="equipment-instance-name">
-        {full} {locked && <span title="Locked">🔒</span>}
+        {full}
+        {(inst.enchantLevel ?? 0) > 0 && (
+          <span className="enchant-badge" title={`Tempered +${inst.enchantLevel}`}> +{inst.enchantLevel}</span>
+        )}
+        {' '}{locked && <span title="Locked">🔒</span>}
       </div>
       <div className="equipment-instance-stats-line">
         {Object.entries(stats).map(([k, v]) => (

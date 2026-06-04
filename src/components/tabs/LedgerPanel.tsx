@@ -3,7 +3,6 @@
 // Lives in the right-rail "ledger" subtab. Pure save-management UI: no game
 // state read except passing through to importSave. Reload on "Burn" wipes
 // localStorage entirely (including the intro-seen flag).
-import React from 'react';
 import type { GameState } from '../../types';
 import { saveGame, exportSave, importSave, wipeSave } from '../../state/save';
 import { showToast } from '../../systems/engine';

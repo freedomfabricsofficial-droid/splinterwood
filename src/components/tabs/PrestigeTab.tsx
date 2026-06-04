@@ -113,4 +113,24 @@ export function PrestigeTab({ state, onAction }: { state: GameState; onAction: (
                 </span>
               </div>
               <div className="investment-effect-label">{def.effectLabel}</div>
-              <div className="investment-
+              <div className="investment-numbers">
+                <span className="investment-perlevel">{investmentNextDesc(def)}</span>
+                {current && <span className="investment-current">{current}</span>}
+              </div>
+              <div className="investment-flavor">{def.flavor}</div>
+              <button
+                className="investment-buy-btn"
+                disabled={!affordable}
+                onClick={() => {
+                  if (buyInvestment(state, def.id)) onAction();
+                }}
+              >
+                {maxed ? 'Maxed out' : `Invest — ${fmt(cost)} Slush`}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

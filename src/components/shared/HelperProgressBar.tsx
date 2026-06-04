@@ -1,7 +1,6 @@
 // Small progress bar shown on a task card when a helper is working that task.
 // Mirrors the AdCap "manager" style — the player sees their helper grinding
 // alongside (or instead of) them.
-import React from 'react';
 import type { GameState } from '../../types';
 import { HELPERS } from '../../data/helpers';
 import { getTaskDef, getTaskTime } from '../../systems/engine';

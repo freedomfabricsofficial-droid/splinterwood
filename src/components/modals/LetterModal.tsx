@@ -2,7 +2,7 @@
 // Dead UI path in current builds (daily rewards moved to dedicated button)
 // but kept around in case the old letter flow gets reused. Story letters use
 // StoryLetterModal instead.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MARGIN_DOODLES, type LetterContents } from '../../data/letter';
 
 export function LetterModal({ letter, onClaim, onClose }: {

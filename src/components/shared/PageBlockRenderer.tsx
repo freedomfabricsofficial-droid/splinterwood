@@ -4,7 +4,6 @@
 //   - content     → Schoolbell cursive (the actual writing on the page)
 //   - observation → IM Fell English italic, dimmer, indented (player thoughts)
 //   - maggie      → Indie Flower (handwritten note from Maggie)
-import React from "react";
 import type { PageBlock } from '../../data/pages';
 
 export function PageBlockRenderer({ block }: { block: PageBlock }) {

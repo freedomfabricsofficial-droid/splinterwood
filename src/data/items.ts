@@ -29,6 +29,14 @@ export const ITEMS: Record<string, ItemDef> = {
   item_buckler:  { name: 'Stone Buckler',     sell: 150,  category: 'equipment', equip: { slot: 'offhand', def: 5 },  flavor: 'Heavy. Worth it.' },
   item_maul:     { name: 'Greystone Maul',    sell: 380,  category: 'equipment', equip: { slot: 'weapon',  atk: 10 }, flavor: 'Two-handed. The other hand is for balance.' },
   item_veinblade:{ name: 'Veinforged Blade',  sell: 1100, category: 'equipment', equip: { slot: 'weapon',  atk: 18 }, flavor: 'Hums when you hold it. Louder when you swing.' },
+  // Floor 3 cloud-gear (The Cloud Islands) — crafted by extending Carving + Smithing.
+  // Fills the previously-empty head/body/hands/trinket slots, so it ADDS a layer
+  // instead of out-stating the weapon/offhand ladder. Armor pieces (def/hp) are
+  // Temperable; the charm is pure crit utility, a deliberate exotic slot.
+  item_cloudhelm:  { name: 'Cloudiron Helm',     sell: 700,  category: 'equipment', equip: { slot: 'head',    def: 5, hp: 8 },                                  flavor: 'Light as fog, cold as the climb up.' },
+  item_skycuirass: { name: 'Sky-Forged Cuirass', sell: 1500, category: 'equipment', equip: { slot: 'body',    def: 8, hp: 16 },                                 flavor: 'Forged where the air runs thin. So does your patience.' },
+  item_wovengloves:{ name: 'Wovenbark Gloves',   sell: 600,  category: 'equipment', equip: { slot: 'hands',   def: 3, gather_speed: 0.06, craft_speed: 0.06 },   flavor: 'Supple bark, somehow. Laileb won\'t say how.' },
+  item_driftcharm: { name: 'Driftwood Charm',    sell: 900,  category: 'equipment', equip: { slot: 'trinket', crit: 0.05, crit_dmg: 0.15 },                      flavor: 'Driftwood from a sea no one can point to.' },
 
   // Consumables (sell prices unchanged; they're not resale items)
   potion_minor: {
@@ -70,20 +78,74 @@ export const ITEMS: Record<string, ItemDef> = {
     consume: { coinBonus: 100, description: 'Find 100 coin lining your pocket.' },
   },
 
+  // Alchemy tonics (Floor 3 — brewed from earlier-floor materials)
+  tonic_swiftroot: {
+    name: 'Swiftroot Tonic',
+    sell: 8,
+    category: 'consumable',
+    flavor: 'Laileb swears it\'s "mostly root." The "mostly" does a lot of work.',
+    consume: {
+      xpBoost: { skill: 'all', amount: 0.25, durationSec: 300 },
+      description: '+25% XP to all skills for 5 minutes.',
+    },
+  },
+  tonic_ember: {
+    name: 'Ember Tincture',
+    sell: 30,
+    category: 'consumable',
+    flavor: 'Warms you from the inside. Possibly forever. Drink responsibly.',
+    consume: {
+      xpBoost: { skill: 'all', amount: 0.5, durationSec: 420 },
+      description: '+50% XP to all skills for 7 minutes.',
+    },
+  },
+  tonic_veil: {
+    name: 'Veil Extract',
+    sell: 110,
+    category: 'consumable',
+    flavor: 'Tastes like a word you almost remember. Then don\'t.',
+    consume: {
+      xpBoost: { skill: 'all', amount: 0.85, durationSec: 600 },
+      description: '+85% XP to all skills for 10 minutes.',
+    },
+  },
+
   // Loot — bumped 3x; foe drops are now real money
   meat_scrap:    { name: 'Meat Scrap',        sell: 6,    category: 'loot', flavor: 'Definitely meat. Probably.' },
   coin_purse:    { name: 'Coin Purse',        sell: 75,   category: 'loot', flavor: 'Has someone else\'s initials embroidered on it.' },
   troll_tooth:   { name: "Troll's Tooth",     sell: 240,  category: 'loot', flavor: 'Still warm. Best not to think about it.' },
+
+  // --- Alchemy reagents (rare GATHERING drops) ---
+  // Flavor is deliberately mysterious: these start dropping long before the
+  // player can brew anything, so they read as "useful for... something."
+  reagent_twig_burl: { name: 'Twig Burl',          sell: 18,  category: 'reagent', flavor: 'A knotted swelling in the wood. It twitches if you watch too long.' },
+  reagent_oak_bulb:  { name: 'Oak Bulb',           sell: 30,  category: 'reagent', flavor: 'Swollen, warm, faintly humming. Surely good for something.' },
+  reagent_pinecone:  { name: 'Resinous Pinecone',  sell: 45,  category: 'reagent', flavor: 'Weeps a sap that smells of a memory you can\'t place.' },
+  reagent_ironbud:   { name: 'Ironbark Bud',       sell: 90,  category: 'reagent', flavor: 'Hard as a coin and twice as reluctant to open.' },
+  reagent_sand_pearl:{ name: 'Sand Pearl',         sell: 35,  category: 'reagent', flavor: 'A bead the desert spat up. Cool, against all reason.' },
+  reagent_grey_geode:{ name: 'Grey Geode',         sell: 60,  category: 'reagent', flavor: 'Something rattles inside. You decide not to open it. Yet.' },
+  reagent_blue_gem:  { name: 'Pulsing Blue Gem',   sell: 120, category: 'reagent', flavor: 'It keeps a slow, patient beat. Like it\'s waiting.' },
+  reagent_veinheart: { name: 'Veinheart Shard',    sell: 200, category: 'reagent', flavor: 'Warm in the dark. Warmer when you think about it.' },
+
+  // --- Enchanting reagents (rare ENEMY drops) ---
+  reagent_goblin_eye:    { name: 'Goblin Eye',          sell: 25,  category: 'reagent', flavor: 'Still looking at something. You\'d rather not know what.' },
+  reagent_boar_tusk:     { name: 'Powdered Boar Tusk',  sell: 50,  category: 'reagent', flavor: 'Ground fine. Smells of pepper and bad decisions.' },
+  reagent_bandit_knuckle:{ name: "Bandit's Knucklebone",sell: 80,  category: 'reagent', flavor: 'Polished smooth by nervous thumbs. Lucky, allegedly.' },
+  reagent_brigand_brand: { name: "Brigand's Brand",     sell: 120, category: 'reagent', flavor: 'A scrap of branded leather. The mark means nothing to you. Yet.' },
+  reagent_taxman_seal:   { name: "Taxman's Wax Seal",   sell: 160, category: 'reagent', flavor: 'Pressed with a sigil that makes your teeth itch.' },
+  reagent_troll_toe:     { name: 'Troll Toe',           sell: 220, category: 'reagent', flavor: 'Regenerates slightly when no one is looking. Keep it in the bag.' },
+  reagent_golem_core:    { name: 'Golem Core',          sell: 320, category: 'reagent', flavor: 'A stone that remembers being told what to do.' },
 };
 
 // Display order of categories in the satchel.
 export const CATEGORY_ORDER: ItemCategory[] = [
-  'equipment', 'material', 'consumable', 'loot', 'quest', 'curio',
+  'equipment', 'material', 'reagent', 'consumable', 'loot', 'quest', 'curio',
 ];
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   equipment:  'Equipment',
   material:   'Materials',
+  reagent:    'Reagents',
   consumable: 'Consumables',
   loot:       'Loot',
   quest:      'Quest Items',

@@ -44,6 +44,8 @@ export const SKILL_INFO: Record<SkillId, SkillInfo> = {
       { level: 4,  what: 'Bark Shield (offhand)' },
       { level: 12, what: 'Pinewood Sword (weapon)' },
       { level: 22, what: 'Ironbark Greatbow (weapon)' },
+      { level: 30, what: 'Wovenbark Gloves (hands) — Cloud Islands' },
+      { level: 36, what: 'Driftwood Charm (trinket) — Cloud Islands' },
     ],
     introducedOn: 'Splinterwood',
   },
@@ -89,8 +91,34 @@ export const SKILL_INFO: Record<SkillId, SkillInfo> = {
       { level: 14, what: 'Greystone Maul (weapon)' },
       { level: 20, what: 'Brock\'s human moment quest' },
       { level: 26, what: 'Veinforged Blade (weapon)' },
+      { level: 30, what: 'Cloudiron Helm (head) — Cloud Islands' },
+      { level: 36, what: 'Sky-Forged Cuirass (body) — Cloud Islands' },
     ],
     introducedOn: 'Greystone Reach',
+  },
+  alchemy: {
+    id: 'alchemy',
+    name: 'Alchemy',
+    flavor: '"Everything is a tonic if you\'re brave enough." — Laileb',
+    description: 'Brew tonics from rare reagents that drop while gathering (oak bulbs, pinecones, pulsing gems...). Tonics grant timed XP boosts — and because the reagents only come from gathering, every gathering skill stays worth doing forever.',
+    usedIn: ['Workshop → Alchemy'],
+    unlocks: [
+      { level: 1,  what: 'Swiftroot Tonic (+25% XP)' },
+      { level: 10, what: 'Ember Tincture (+50% XP)' },
+      { level: 22, what: 'Veil Extract (+85% XP)' },
+    ],
+    introducedOn: 'The Cloud Islands',
+  },
+  enchanting: {
+    id: 'enchanting',
+    name: 'Enchanting',
+    flavor: '"Old steel, new spite. Same blade." — Laileb',
+    description: 'Temper the gear you already own, spending reagents that drop from foes. Each temper adds a flat % to a weapon or armor\'s power, with no cap — so a Floor-1 carved sword can become an endgame weapon. Gear is improved, never replaced.',
+    usedIn: ['Workshop → Enchanting'],
+    unlocks: [
+      { level: 1,  what: 'Temper equipped or locked gear (+10% per level)' },
+    ],
+    introducedOn: 'The Cloud Islands',
   },
 };
 
@@ -99,11 +127,12 @@ export const SKILL_INFO: Record<SkillId, SkillInfo> = {
 export function getVisibleSkills(state: import('../types').GameState): SkillId[] {
   const visible: SkillId[] = ['woodcutting', 'carving', 'combat'];
   if (state.questFlags.visited_greystone) visible.push('mining', 'smithing');
+  if (state.questFlags.visited_floor3) visible.push('alchemy', 'enchanting');
   return visible;
 }
 
 export function getAllSkillsForDisplay(state: import('../types').GameState): { id: SkillId; locked: boolean }[] {
   const visible = new Set(getVisibleSkills(state));
-  const all: SkillId[] = ['woodcutting', 'carving', 'combat', 'mining', 'smithing'];
+  const all: SkillId[] = ['woodcutting', 'carving', 'combat', 'mining', 'smithing', 'alchemy', 'enchanting'];
   return all.map(id => ({ id, locked: !visible.has(id) }));
 }

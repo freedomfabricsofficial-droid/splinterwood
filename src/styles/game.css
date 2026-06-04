@@ -1780,6 +1780,26 @@ body[data-floor='greystone_reach'] {
     var(--paper);
 }
 
+/* Floor 3 — The Cloud Islands: airy, luminous, lavender-and-copper sky.
+   Deliberately distinct from Splinterwood's warm wood and Greystone's cold
+   slate: pale dreamy paper, deep indigo ink, copper highlight, rose accent. */
+body[data-floor='floor_3'] {
+  --paper: #e7e2f1;
+  --paper-dark: #d0c8e2;
+  --ink: #2a2444;
+  --ink-soft: #564d72;
+  --gold: #c07a33;
+  --green: #2f6f60;
+  --accent: #a23c72;
+  --shadow: rgba(60, 48, 96, 0.40);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.55), transparent 42%),
+    radial-gradient(circle at 82% 80%, rgba(192, 122, 51, 0.16), transparent 52%),
+    radial-gradient(circle at 60% 30%, rgba(162, 60, 114, 0.12), transparent 48%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.030) 0px, rgba(255,255,255,0.030) 1px, transparent 1px, transparent 3px),
+    var(--paper);
+}
+
 /* Sub-tab buttons inside districts (Woodcutting/Mining, Carving/Smithing).
    The existing .tabs handles them but they were styled assuming one option;
    now they need clear "this one's selected" affordance. */
@@ -2320,6 +2340,20 @@ body[data-floor='greystone_reach'] .tab.breathing {
     box-shadow:
       inset 0 0 12px 2px rgba(58, 96, 144, 0.50),
       0 0 8px rgba(58, 96, 144, 0.40);
+  }
+}
+
+/* Floor-3 (Cloud Islands) variant — copper-rose glow */
+body[data-floor='floor_3'] .district-btn.breathing,
+body[data-floor='floor_3'] .tab.breathing {
+  animation-name: notify-breathe-sky;
+}
+@keyframes notify-breathe-sky {
+  0%, 100% { box-shadow: inset 0 0 0 0 rgba(162, 60, 114, 0.0); }
+  50%      {
+    box-shadow:
+      inset 0 0 12px 2px rgba(162, 60, 114, 0.45),
+      0 0 8px rgba(192, 122, 51, 0.40);
   }
 }
 
@@ -3623,4 +3657,573 @@ body {
   color: var(--ink-soft);
   text-align: center;
 }
-/* Tier stack row
+/* Tier stack row reads slightly differently from instance rows */
+.equipment-instance-row.stack-row {
+  font-style: italic;
+}
+.equipment-instance-row.stack-row .equipment-instance-name {
+  font-style: normal;
+}
+
+/* ============================================================================
+   LEDGER SKIN v0.83 — "decades-in-the-pack" aesthetic
+   ----------------------------------------------------------------------------
+   Supersedes the v0.68 ASSET PACK SKIN (the pixelated PNG desk/frames/buttons)
+   with a darker, higher-contrast, hand-inked ledger look built entirely in CSS.
+
+   Design rules honored here:
+     • RE-SKIN ONLY. Touches color / background / border / shadow / decoration.
+       No layout, no positioning, no flex/grid, no transitions, no z-index of
+       interactive elements, no JSX — so every sound, hover, selection state,
+       particle and animation already in the game keeps working untouched.
+     • TOKEN-DRIVEN. Reads --paper/--ink/--gold/etc, so the Greystone floor
+       palette remap (body[data-floor]) carries the look to floor 2 for free.
+       The aged-paper texture is its own token (--aged-paper) with a cool
+       Greystone override below.
+     • Comes last in the file, so it wins source-order; uses !important only
+       where it must beat the v0.68 skin's own !important rules.
+   To revert: delete this whole section + the --paper-warm/--gold-bright/etc
+   additions in :root.
+   ============================================================================ */
+
+:root {
+  /* Aged parchment: foxing spots + edge-burn vignette + faint ledger ruling +
+     uneven base tone. Reused by the ledger "page" (#root) and every leaf panel. */
+  --aged-paper:
+    radial-gradient(circle at 18% 22%, rgba(120,70,20,.16), transparent 7%),
+    radial-gradient(circle at 72% 14%, rgba(110,60,15,.13), transparent 6%),
+    radial-gradient(circle at 88% 56%, rgba(120,70,20,.15), transparent 7%),
+    radial-gradient(circle at 12% 72%, rgba(110,60,15,.12), transparent 6%),
+    radial-gradient(circle at 58% 86%, rgba(120,70,20,.13), transparent 8%),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgba(70,42,16,.16) 90%, rgba(45,26,10,.26) 100%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(60,38,14,.09) 27px 28px),
+    linear-gradient(160deg, #ddc795, #d2b080 70%, #c7af74);
+
+  /* Lighter parchment for "leaf" panels, so they lift off the darker page. */
+  --leaf-paper:
+    radial-gradient(circle at 28% 16%, rgba(120,70,20,.10), transparent 16%),
+    radial-gradient(circle at 84% 80%, rgba(110,60,15,.09), transparent 16%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(60,38,14,.06) 27px 28px),
+    linear-gradient(160deg, #f4e6ba, #ecdaad 70%, #e2cd9f);
+}
+
+/* ---------- 1. The desk (dark, high-contrast walnut) ---------- */
+body {
+  background:
+    radial-gradient(ellipse 60px 26px at 16% 22%, rgba(10,5,2,.55), transparent 70%),
+    radial-gradient(ellipse 50px 22px at 82% 68%, rgba(10,5,2,.50), transparent 70%),
+    radial-gradient(circle at 50% 28%, rgba(92,58,28,.28), transparent 64%),
+    radial-gradient(circle at 50% 122%, rgba(0,0,0,.62), transparent 60%),
+    repeating-linear-gradient(90deg, transparent 0 248px, rgba(0,0,0,.50) 248px 250px, rgba(120,80,40,.12) 250px 252px),
+    repeating-linear-gradient(91deg, rgba(0,0,0,.15) 0 2px, rgba(95,60,28,.06) 2px 5px, transparent 5px 11px),
+    linear-gradient(160deg, #3a2410 0%, #281708 55%, #190d05 100%) !important;
+  image-rendering: auto !important;
+}
+
+/* ---------- 2. The ledger as a bound book (#root is the page) ---------- */
+#root {
+  position: relative;
+  max-width: 1280px;   /* leave the desk showing on both sides, like the mockup */
+  margin: 0 auto;
+  background: var(--aged-paper);
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  padding: 12px 20px 14px;
+  overflow: hidden;   /* keeps stains/flourishes inside the book; fixed-position
+                         popups (modals, toasts, dev panel, particles) are
+                         unaffected since they're position:fixed */
+  /* Outer drop shadow only — no large inset blur (it repaints on every tick
+     and tanks FPS during task completions). Edge-burn comes from --aged-paper. */
+  box-shadow:
+    0 2px 0 #120a04,
+    0 18px 40px -22px rgba(0,0,0,.65);
+}
+/* A single lived-in coffee ring on the page. Decorative, never blocks input. */
+#root::after {
+  content: "";
+  position: absolute;
+  top: 70px; right: 46px;
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  border: 5px solid rgba(95,55,18,.15);
+  box-shadow: inset 0 0 16px rgba(95,55,18,.09);
+  pointer-events: none;
+  z-index: 6;
+}
+/* Hand-inked corner flourishes on the book (one per corner, vector SVG). */
+#root::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  z-index: 5;
+  background-repeat: no-repeat;
+  background-position: top left, top right, bottom right, bottom left;
+  background-size: 30px 30px;
+  background-image:
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g fill='none' stroke='%235a3f24' stroke-width='2'><path d='M5 37 Q5 5 37 5'/><path d='M5 22 Q5 11 13 8'/><path d='M22 5 Q11 5 8 13'/></g><circle cx='7' cy='7' r='2.3' fill='%235a3f24'/></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g transform='rotate(90 20 20)'><g fill='none' stroke='%235a3f24' stroke-width='2'><path d='M5 37 Q5 5 37 5'/><path d='M5 22 Q5 11 13 8'/><path d='M22 5 Q11 5 8 13'/></g><circle cx='7' cy='7' r='2.3' fill='%235a3f24'/></g></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g transform='rotate(180 20 20)'><g fill='none' stroke='%235a3f24' stroke-width='2'><path d='M5 37 Q5 5 37 5'/><path d='M5 22 Q5 11 13 8'/><path d='M22 5 Q11 5 8 13'/></g><circle cx='7' cy='7' r='2.3' fill='%235a3f24'/></g></svg>"),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g transform='rotate(270 20 20)'><g fill='none' stroke='%235a3f24' stroke-width='2'><path d='M5 37 Q5 5 37 5'/><path d='M5 22 Q5 11 13 8'/><path d='M22 5 Q11 5 8 13'/></g><circle cx='7' cy='7' r='2.3' fill='%235a3f24'/></g></svg>");
+}
+/* Dog-eared top-right corner of the book. */
+header { position: relative; }
+header::after {
+  content: "";
+  position: absolute;
+  top: -12px; right: -20px;
+  width: 40px; height: 40px;
+  background: linear-gradient(225deg, var(--paper-edge) 0 50%, transparent 50%);
+  box-shadow: -3px 3px 6px rgba(0,0,0,.28);
+  border-bottom-left-radius: 6px;
+  pointer-events: none;
+  z-index: 7;
+}
+
+/* ---------- 3. Panels become inked, aged "leaves" ----------
+   Overrides the v0.68 corner-PNG / border-image skin. */
+.panel,
+.panel.main-panel,
+.combat-pane {
+  background: var(--leaf-paper) !important;
+  border: 2px solid var(--ink-soft) !important;
+  border-image: none !important;
+  box-shadow: 2px 3px 0 var(--shadow) !important;
+}
+.right-rail-content {
+  background: var(--leaf-paper) !important;
+  border: 2px solid var(--ink-soft) !important;
+  border-top: none !important;          /* tabs attach to the top edge */
+  border-image: none !important;
+  box-shadow: 2px 3px 0 var(--shadow) !important;
+}
+
+/* Task / shop / craft cards read as lighter leaves laid on the page. */
+.action-card {
+  background: linear-gradient(180deg, rgba(247,238,210,.92), rgba(228,208,164,.72)) !important;
+}
+.action-card.active-task {
+  background: linear-gradient(180deg, rgba(207,154,42,.22), rgba(160,122,35,.12)) !important;
+}
+
+/* ---------- 4. Retire the pixelated combat button images ----------
+   Replace tier-button.png / ability-button.png surfaces with stamped CSS so
+   they sit consistently in the inked look. (avatar-background.png and the
+   card-icon paper crop are left as-is — they still read fine.) */
+.combat-tier-selector {
+  background: linear-gradient(180deg, var(--paper), var(--paper-dark)) !important;
+  border: 2px solid var(--ink-soft) !important;
+  border-radius: 4px !important;
+  box-shadow: inset 0 0 18px rgba(70,42,16,.14) !important;
+  padding: 10px 14px !important;
+  image-rendering: auto !important;
+}
+.combat-tier-fight-btn,
+.ability-btn {
+  background: linear-gradient(180deg, var(--paper), var(--paper-dark)) !important;
+  border: 2px solid var(--ink-soft) !important;
+  border-radius: 3px !important;
+  box-shadow: 1px 2px 0 var(--shadow) !important;
+  image-rendering: auto !important;
+}
+.combat-tier-fight-btn:hover:not(:disabled),
+.ability-btn.ready:hover {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold)) !important;
+  color: var(--paper) !important;
+  filter: none !important;
+}
+.ability-btn.ready:hover i { color: var(--paper) !important; }
+
+/* ---------- 5a. "The Balance" card (left-rail quick stats) ---------- */
+.district-rail-stats {
+  position: relative;
+  background: var(--leaf-paper) !important;
+  border: 2px solid var(--ink-soft) !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 3px 0 var(--shadow);
+  padding: 10px 11px 12px !important;
+}
+.district-rail-stats::before {
+  content: "The Balance";
+  display: block;
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-bottom: 1.5px solid rgba(60,38,14,.4);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+/* Wax-seal glyph before the Coin label */
+.quick-stat-coin > span:first-child::before {
+  content: "¢";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px; height: 15px;
+  margin-right: 6px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #b1402f, #7d1a16 68%);
+  color: #f3d9a0;
+  font-size: 0.62rem;
+  font-family: 'IM Fell English SC', serif;
+  box-shadow: inset 0 -1px 2px rgba(0,0,0,.5), 0 1px 1px rgba(0,0,0,.3);
+}
+
+/* ---------- 5b. Skill-tree category bars — real contrast vs the page ---------- */
+.category-tree {
+  background: rgba(40,24,8,.06) !important;
+  border: 2px solid var(--ink-soft) !important;
+  border-radius: 4px !important;
+  box-shadow: 1px 2px 0 var(--shadow);
+}
+.category-tree-header {
+  background: linear-gradient(180deg, var(--paper), var(--paper-dark));
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 3px;
+  padding: 8px 12px !important;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,.08);
+}
+.category-tree-header.collapsible:hover {
+  background: linear-gradient(180deg, var(--paper-warm), var(--paper));
+}
+
+/* ---------- 5. Greystone Reach (floor 2): cool slate desk + grey aged paper ----------
+   The floor's token remap already recolors ink/paper/gold; we only need to
+   restate the desk surface and the aged-paper texture in cool tones. */
+body[data-floor='greystone_reach'] {
+  --aged-paper:
+    radial-gradient(circle at 20% 20%, rgba(40,60,90,.14), transparent 8%),
+    radial-gradient(circle at 80% 70%, rgba(40,60,90,.12), transparent 8%),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgba(20,30,45,.18) 90%, rgba(12,18,28,.30) 100%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(20,30,45,.10) 27px 28px),
+    linear-gradient(160deg, #c6c8c4, #b6bab8 70%, #a8acac);
+  --leaf-paper:
+    radial-gradient(circle at 28% 16%, rgba(40,60,90,.10), transparent 16%),
+    radial-gradient(circle at 84% 80%, rgba(40,60,90,.09), transparent 16%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(20,30,45,.07) 27px 28px),
+    linear-gradient(160deg, #d6d8d4, #c8ccca 70%, #bcc0c0);
+  background:
+    radial-gradient(circle at 50% 28%, rgba(70,90,120,.22), transparent 64%),
+    radial-gradient(circle at 50% 122%, rgba(0,0,0,.60), transparent 60%),
+    repeating-linear-gradient(91deg, rgba(0,0,0,.16) 0 2px, rgba(60,80,110,.05) 2px 6px, transparent 6px 12px),
+    linear-gradient(160deg, #2a3340 0%, #1c242e 60%, #121821 100%) !important;
+}
+body[data-floor='greystone_reach'] #root::after {
+  border-color: rgba(40,60,90,.16);
+  box-shadow: inset 0 0 16px rgba(40,60,90,.10);
+}
+
+/* ---------- 6. The Cloud Islands (floor 3): twilight-sky desk + lavender paper ----------
+   The floor's token remap recolors ink/paper/gold; here we restate the desk
+   surface (a dusk sky the ledger floats in) and the warm-lavender aged paper. */
+body[data-floor='floor_3'] {
+  --aged-paper:
+    radial-gradient(circle at 20% 20%, rgba(162,60,114,.10), transparent 8%),
+    radial-gradient(circle at 80% 70%, rgba(192,122,51,.10), transparent 8%),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgba(70,55,110,.14) 90%, rgba(50,40,80,.24) 100%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(70,55,110,.08) 27px 28px),
+    linear-gradient(160deg, #ece7f4, #e0d9ee 70%, #d4cce4);
+  --leaf-paper:
+    radial-gradient(circle at 28% 16%, rgba(162,60,114,.08), transparent 16%),
+    radial-gradient(circle at 84% 80%, rgba(192,122,51,.08), transparent 16%),
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(70,55,110,.06) 27px 28px),
+    linear-gradient(160deg, #f0ecf7, #e6e0f1 70%, #dcd4e9);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,235,210,.30), transparent 60%),
+    radial-gradient(circle at 22% 70%, rgba(180,150,220,.28), transparent 55%),
+    radial-gradient(circle at 50% 128%, rgba(30,20,55,.55), transparent 60%),
+    repeating-linear-gradient(91deg, rgba(255,255,255,.05) 0 2px, rgba(120,90,160,.04) 2px 6px, transparent 6px 12px),
+    linear-gradient(160deg, #4a3a72 0%, #6b4a78 45%, #8a5a7a 75%, #a86a72 100%) !important;
+}
+body[data-floor='floor_3'] #root::after {
+  border-color: rgba(162,60,114,.18);
+  box-shadow: inset 0 0 16px rgba(120,90,160,.14);
+}
+
+/* Enchant level badge — shown on tempered gear names */
+.enchant-badge {
+  color: var(--gold);
+  font-weight: bold;
+  font-family: 'IM Fell English SC', serif;
+  text-shadow: 0 0 4px rgba(180, 130, 40, 0.35);
+}
+
+/* ============================================================================
+   PRESTIGE — "Cook the Books" screen
+   ============================================================================ */
+.prestige-locked {
+  text-align: center;
+  color: var(--ink-soft);
+  padding: 40px 24px;
+  font-style: italic;
+}
+.prestige-locked i { font-size: 2.6em; opacity: 0.5; display: block; margin-bottom: 10px; }
+.prestige-locked p { margin: 6px 0; }
+.prestige-locked-hint { font-family: 'Special Elite', monospace; font-size: 0.85em; font-style: normal; }
+
+.prestige-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border: 2px solid var(--ink-soft);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(40,24,8,.10), rgba(40,24,8,.04));
+  box-shadow: 2px 3px 0 var(--shadow);
+}
+.prestige-title {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 1.5em;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.prestige-subtitle {
+  font-family: var(--font-hand);
+  font-size: 1.05em;
+  color: var(--ink-soft);
+}
+.prestige-slush {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.prestige-slush-label {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.7em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.prestige-slush-value {
+  font-family: 'Special Elite', monospace;
+  font-size: 1.6em;
+  color: var(--gold);
+  text-shadow: 0 1px 0 rgba(255,244,210,.4);
+}
+
+.prestige-result {
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(207,154,42,.16), rgba(160,122,35,.06));
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  box-shadow: 2px 3px 0 var(--shadow);
+}
+.prestige-result-line { font-family: var(--font-hand); font-size: 1.18em; line-height: 1.4; color: var(--ink); }
+.prestige-result-reward { font-family: 'Special Elite', monospace; font-size: 0.85em; color: var(--gold); margin-top: 6px; }
+
+.prestige-cook {
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(207,154,42,.14), rgba(160,122,35,.06));
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  box-shadow: 2px 3px 0 var(--shadow);
+}
+.prestige-cook-yield { font-size: 1.05em; margin-bottom: 6px; }
+.prestige-cook-yield strong { color: var(--gold); font-family: 'Special Elite', monospace; }
+.prestige-cook-detail {
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.prestige-resets { font-family: 'IM Fell English SC', serif; color: var(--accent); letter-spacing: 0.04em; }
+.prestige-keeps  { font-family: 'IM Fell English SC', serif; color: var(--green);  letter-spacing: 0.04em; }
+.prestige-cook-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 1.05em;
+  letter-spacing: 0.1em;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #fff7e6;
+  border: 1.5px solid #6f5418;
+}
+.prestige-cook-btn:hover:not(:disabled) { background: linear-gradient(180deg, #d8a838, #b8902f); color: #fff; }
+.prestige-cook-btn.danger { background: linear-gradient(180deg, #a83a2c, var(--accent)); border-color: var(--accent-deep, #4e0c0c); }
+.prestige-confirm-text { display: block; text-align: center; font-style: italic; margin-bottom: 8px; color: var(--accent); }
+.prestige-confirm-actions { display: flex; gap: 8px; }
+.prestige-confirm-actions .prestige-cook-btn { flex: 1; }
+.prestige-cancel-btn { flex: 0 0 auto; padding: 10px 16px; }
+
+.prestige-investments-header {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 1.2em;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--ink-soft);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+.prestige-investments-flavor {
+  font-family: var(--font-hand);
+  font-size: 1em;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+.prestige-investments {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.investment-card {
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(247,238,210,.85), rgba(228,208,164,.62));
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 1px 2px 0 var(--shadow);
+}
+.investment-card.maxed { border-color: var(--gold); background: linear-gradient(180deg, rgba(207,154,42,.16), rgba(160,122,35,.08)); }
+.investment-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.investment-name { font-family: 'IM Fell English SC', serif; font-size: 1.05em; letter-spacing: 0.03em; }
+.investment-level { font-family: 'Special Elite', monospace; font-size: 0.78em; color: var(--ink-soft); white-space: nowrap; }
+.investment-flavor { font-family: var(--font-hand); font-size: 1em; color: var(--ink-soft); line-height: 1.2; }
+.investment-effect-label { font-size: 0.88em; color: var(--ink); font-style: italic; }
+.investment-numbers { display: flex; flex-wrap: wrap; gap: 2px 10px; font-family: 'Special Elite', monospace; font-size: 0.78em; }
+.investment-perlevel { color: var(--green); }
+.investment-current { color: var(--gold); }
+.investment-buy-btn { margin-top: 2px; width: 100%; font-size: 0.85em; }
+
+/* ============================================================================
+   GOAL TRACKER — persistent "Pursuing" strip under the banner
+   ============================================================================ */
+.goal-tracker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(74, 48, 21, 0.5);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(40, 24, 8, 0.07), rgba(40, 24, 8, 0.02));
+  box-shadow: 1px 2px 0 var(--shadow);
+}
+.goal-tracker-label {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+.goal-list {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  min-width: 0;
+}
+.goal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+}
+.goal-text { color: var(--ink); }
+.goal-bar {
+  display: inline-block;
+  width: 84px;
+  height: 7px;
+  border: 1px solid rgba(74, 48, 21, 0.45);
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(40, 24, 8, 0.18);
+  flex-shrink: 0;
+}
+.goal-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  transition: width 0.3s ease;
+}
+.goal-count {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.8em;
+  color: var(--ink-soft);
+}
+
+/* ============================================================================
+   QUEST LOG — two-pane WoW-style pop-up
+   ============================================================================ */
+.modal.quest-log-modal {
+  max-width: 780px;
+  width: 92vw;
+  padding: 20px 22px 18px;
+}
+.quest-log-body {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  grid-template-rows: minmax(0, 62vh);  /* bounds the row so panes scroll, not spill */
+  gap: 14px;
+  margin-top: 10px;
+  min-height: 320px;
+}
+.quest-log-list {
+  overflow-y: auto;
+  min-height: 0;   /* lets the list scroll within the grid instead of overflowing */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 8px;
+  border-right: 1px solid rgba(74, 48, 21, 0.3);
+}
+.quest-log-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  line-height: 1.25;
+  background: linear-gradient(180deg, rgba(247,238,210,.7), rgba(228,208,164,.5));
+  border: 1px solid rgba(74,48,21,.4);
+  border-left: 3px solid var(--gold);
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: none;
+  letter-spacing: 0;
+}
+.quest-log-item:hover { background: rgba(207,154,42,.18); transform: none; box-shadow: none; color: var(--ink); }
+.quest-log-item.active { border-left-color: var(--ink); background: rgba(160,122,35,.20); }
+.quest-log-item.done { opacity: 0.6; border-left-color: var(--green); }
+.quest-log-item-title { display: block; font-family: 'IM Fell English SC', serif; font-size: 0.95em; line-height: 1.2; color: var(--ink); }
+.quest-log-item-giver { display: block; margin-top: 3px; font-family: 'Special Elite', monospace; font-size: 0.7em; font-style: italic; color: var(--ink-soft); }
+.quest-log-section {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.72em; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 8px 0 2px;
+  border-top: 1px dotted rgba(74,48,21,.3);
+  padding-top: 6px;
+}
+.quest-log-empty { font-style: italic; color: var(--ink-soft); padding: 12px; }
+.quest-log-detail { overflow-y: auto; min-height: 0; padding-right: 4px; }
+.quest-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.quest-detail-title { font-family: 'IM Fell English SC', serif; font-size: 1.3em; letter-spacing: 0.04em; color: var(--ink); }
+.quest-detail-done { font-family: 'Special Elite', monospace; font-size: 0.7em; color: var(--green); border: 1px solid var(--green); border-radius: 2px; padding: 1px 6px; white-space: nowrap; }
+.quest-detail-giver { font-family: 'IM Fell English', serif; font-style: italic; color: var(--ink-soft); font-size: 0.9em; margin-bottom: 8px; }
+.quest-detail-quote { font-family: var(--font-hand); font-size: 1.08em; line-height: 1.45; color: var(--ink); padding: 8px 10px; background: rgba(160,122,35,.10); border-left: 2px solid var(--gold); margin-bottom: 10px; }
+.quest-detail-section { font-family: 'IM Fell English SC', serif; font-size: 0.8em; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border-bottom: 1px solid rgba(160,122,35,.3); padding-bottom: 3px; margin: 12px 0 6px; }
+.quest-detail-objective { font-size: 0.95em; color: var(--ink); margin-bottom: 6px; }
+.quest-detail-objlist { display: flex; flex-direction: column; gap: 4px; }
+.quest-obj { display: flex; align-items: center; gap: 8px; font-family: 'Special Elite', monospace; font-size: 0.85em; }
+.quest-obj-check { color: var(--ink-soft); width: 14px; text-align: center; }
+.quest-obj.done .quest-obj-check { color: var(--green); }
+.quest-obj.done .quest-obj-label { color: var(--ink-soft); text-decoration: line-through; }
+.quest-obj-label { flex: 1; }
+.quest-obj-count { color: var(--ink-soft); }
+.quest-detail-rewards { display: flex; flex-direction: column; gap: 4px; }
+.quest-reward { display: flex; align-items: center; gap: 8px; font-family: 'Special Elite', monospace; font-size: 0.88em; color: var(--ink); }
+.quest-reward i { color: var(--gold); font-size: 1.1em; }

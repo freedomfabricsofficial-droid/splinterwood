@@ -98,4 +98,18 @@ export function investmentEffect(state: GameState, effectKey: string): number {
   return total;
 }
 
-// What ONE more level grants �
+// What ONE more level grants — for the UI.
+export function investmentNextDesc(def: InvestmentDef): string {
+  if (def.unit === 'pct') return `+${Math.round(def.perLevel * 100)}% per level`;
+  if (def.effectKey === 'seed_coin') return `+${def.perLevel.toLocaleString()} per level`;
+  return `+${def.perLevel} per level`;
+}
+
+// What the player currently HAS from this investment at its owned level — for the UI.
+// Returns null when nothing is owned yet (so the UI can hide the line).
+export function investmentCurrentDesc(def: InvestmentDef, level: number): string | null {
+  if (level <= 0) return null;
+  if (def.unit === 'pct') return `currently +${Math.round(def.perLevel * level * 100)}%`;
+  if (def.effectKey === 'seed_coin') return `currently +${(def.perLevel * level).toLocaleString()} coin`;
+  return `currently +${def.perLevel * level}`;
+}

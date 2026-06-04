@@ -1,6 +1,6 @@
 // Random event modal — a pop-up with branching choices. Driven by
 // EVENT_DEFS in src/data/events.ts.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { GameState } from '../../types';
 import type { RandomEventDef } from '../../data/events';
 import { showToast } from '../../systems/engine';

@@ -1,7 +1,7 @@
 // Narrative letter delivered by an NPC, triggered by gameplay thresholds.
 // Different from the legacy daily letter: pure story content (rewards
 // optional and rare). Sender-specific class controls the body font.
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { StoryLetter } from '../../data/storyLetters';
 
 export function StoryLetterModal({ letter, onClose }: {

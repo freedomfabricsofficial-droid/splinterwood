@@ -10,13 +10,13 @@
 // When a stat filter is active, only modifier rows whose specific
 // (tier+modifier) roll satisfies the filter render. If none of the
 // modifiers match, the whole tier row hides.
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { GameState, QualityTier, StatKey, ItemInstance } from '../../types';
 import { ITEMS } from '../../data/items';
 import { MODIFIERS } from '../../data/modifiers';
 import {
-  pullFromStack, equipInstance, sellFromStack, getStackUnitSellPrice,
+  pullFromStack, equipInstance, getStackUnitSellPrice,
   instanceStats,
 } from '../../systems/playerStats';
 import { EquipmentInstanceTooltip } from './EquipmentInstanceTooltip';
